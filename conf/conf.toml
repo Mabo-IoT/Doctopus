@@ -1,0 +1,8 @@
+[web]
+    set_name = 'status'
+    order_status = 'get_status'
+
+[redis]
+    db=1
+    host='localhost'
+    port=6379

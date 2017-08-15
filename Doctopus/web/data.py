@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
-import falcon, time, json
-from lib.redis_wrapper import RedisWrapper
+import falcon
+import time
+
+from Doctopus.lib.redis_wrapper import RedisWrapper
 
 
 class Status:
@@ -64,4 +66,3 @@ class Status:
         print('break')
 
         return data
-

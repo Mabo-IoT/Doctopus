@@ -121,3 +121,10 @@ class RedisWrapper:
         :return: 
         """
         return self.__db.rpush(name, *values)
+
+    def expire(self, name, time):
+        """
+        Set an expire flag on key ``name`` for ``time`` seconds. ``time``
+        can be represented by an integer or a Python timedelta object.
+        """
+        return self.__db.expire(name, time)

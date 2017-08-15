@@ -1,2 +1,2 @@
 ## Doctopus
-#### A distributed data collector.
+A distributed data collector.

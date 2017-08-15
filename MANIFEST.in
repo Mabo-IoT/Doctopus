@@ -1,0 +1,1 @@
+recursive-include Doctopus\conf *.lua *.toml

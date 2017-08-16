@@ -125,7 +125,7 @@ class NodeStatus:
         """
         data = self.__redis.hgetall("node_data")
         if data.get(node):
-            url = "http://{}/status".format(data.get(id)['ip'])
+            url = "http://{}/status".format(data.get(node)['ip'])
             return requests.get(url).text
         else:
             return json.dumps({'data': "No data"})

@@ -132,19 +132,26 @@ class WatchDog:
                 self.handle_restart_num += 1
 
     def restart(self, dead_threads, queue):
+        """
+        Restart dead thread
+        :param dead_threads: dead threads name
+        :param queue: Inter-thread communication queue
+        :return:
+        """
+        instances = list()
         if self.reload:
             pass
         else:
             instances = [thread for thread in self.instance_set if thread.name in dead_threads]
 
-            threads_set = dict()
+        threads_set = dict()
 
-            for instance in instances:
-                worker = threading.Thread(target=instance.work, args=(queue,),
-                                          name='%s' % instance.name)
-                worker.setDaemon(True)
-                worker.start()
-                threads_set[instance.name] = worker
+        for instance in instances:
+            worker = threading.Thread(target=instance.work, args=(queue,),
+                                      name='%s' % instance.name)
+            worker.setDaemon(True)
+            worker.start()
+            threads_set[instance.name] = worker
 
             self.thread_set.update(threads_set)
 

@@ -1,8 +1,18 @@
+ip = '10.0.0.0'
+port = '8000'
+node = '测试'
+
 [web]
     set_name = 'status'
     order_status = 'get_status'
 
 [redis]
-    db=1
-    host='localhost'
-    port=6379
+    db= 1
+    host= 'localhost'
+    port= 6379
+
+[server]
+    [redis]
+        db= 1
+        host= "10.203.96.26"
+        port= 6379

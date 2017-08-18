@@ -60,7 +60,7 @@ class Status:
         """
         start_time = time.time()
         while True:
-            data = self.__redis.smembers(self.order_name)
+            data = self.__redis.smembers(self.set_name)
             if data or time.time() - start_time > timeout:
                 break
                 time.sleep(1)

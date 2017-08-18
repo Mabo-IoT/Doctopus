@@ -5,8 +5,31 @@ import ctypes
 import inspect
 from Doctopus.lib.database_wrapper import RedisWrapper
 
+Lock = threading.RLock()
+
 
 class WatchDog:
+    INSTANCE = None
+
+    def __new__(cls, *args, **kwargs):
+        """
+        单例模式的 double check 确保线程安全，增加缓冲标量
+        确保第一次初始化完全
+        :param args:
+        :param kwargs:
+        :return:
+        """
+        _instance = None
+        if not cls.INSTANCE:
+            try:
+                Lock.acquire()
+                if not cls.INSTANCE:
+                    _instance = object.__new__(cls)
+                    cls.INSTANCE = _instance
+            finally:
+                Lock.release()
+        return cls.INSTANCE
+
     def __init__(self, conf):
         self.thread_set = None
         self.instance_set = None
@@ -72,7 +95,6 @@ class WatchDog:
                 self.kill(self.thread_set)
 
             self.write_into_remote(thread_real_time_names)
-
 
     def check_order(self):
         """

@@ -1,13 +1,14 @@
 # -*- coding: utf-8 -*-
 import falcon
 import time
+import requests
+import json
 
-from Doctopus.lib.redis_wrapper import RedisWrapper
+from Doctopus.lib.database_wrapper import RedisWrapper
 
 
 class Status:
-
-    def  __init__(self, conf):
+    def __init__(self, conf):
         redis_conf = conf['redis']
         web_conf = conf['web']
         self.__redis = RedisWrapper(redis_conf)
@@ -35,7 +36,7 @@ class Status:
                 data = data.pop()
                 resp.body = data
             else:
-                resp.body = "None data"
+                resp.body = json.dumps({'data': "No data"})
 
         resp.content_type = 'application/json'
         resp.status = falcon.HTTP_200
@@ -59,10 +60,72 @@ class Status:
         """
         start_time = time.time()
         while True:
-            data = self.__redis.smembers(self.order_name)
-            if  data or time.time() - start_time > timeout:
+            data = self.__redis.smembers(self.set_name)
+            if data or time.time() - start_time > timeout:
                 break
                 time.sleep(1)
         print('break')
 
         return data
+
+
+class Restart:
+    def __init__(self, conf):
+        self.__redis = RedisWrapper(conf["redis"])
+
+    def on_get(self, req, resp):
+        self.__redis.rpush("order_name", "restart")
+        resp.body = json.dumps("Restart now, wait please")
+        resp.content_type = "application/json"
+        resp.status = falcon.HTTP_200
+
+    def on_post(self, req, resp):
+        pass
+
+
+class Reload:
+    def __init__(self, conf):
+        self.__redis = RedisWrapper(conf["redis"])
+
+    def on_get(self, req, resp):
+        self.__redis.rpush("order_name", "reload")
+        resp.body = json.dumps("Reload now, wait please")
+        resp.content_type = "application/json"
+        resp.status = falcon.HTTP_200
+
+    def on_post(self, req, resp):
+        pass
+
+
+class SeverStatus:
+    def __init__(self, conf):
+        self.__redis = RedisWrapper(conf["redis"])
+
+    def on_get(self, req, resp):
+        data = self.__redis.hgetall("node_data")
+        resp.body = json.dumps(data if data else {"data": "No data"})
+        resp.content_type = "application/json"
+        resp.status = falcon.HTTP_200
+
+
+class NodeStatus:
+    def __init__(self, conf):
+        self.__redis = RedisWrapper(conf["redis"])
+
+    def on_get(self, req, resp, node):
+        resp.body = self.get_data(node)
+        resp.content_type = "application/json"
+        resp.status = falcon.HTTP_200
+
+    def get_data(self, node):
+        """
+        Gets the status information of the specified device
+        :param node: Device code
+        :return: json data
+        """
+        data = self.__redis.hgetall("node_data")
+        if data.get(node):
+            url = "http://{}/status".format(data.get(node)['ip'])
+            return requests.get(url).text
+        else:
+            return json.dumps({'data': "No data"})

@@ -3,7 +3,7 @@
 import threading
 import ctypes
 import inspect
-from Doctopus.lib.database_wrapper import RedisWrapper
+import time
 
 Lock = threading.RLock()
 
@@ -33,14 +33,11 @@ class WatchDog:
     def __init__(self, conf):
         self.thread_set = None
         self.instance_set = None
-        self.data = None
-        self.ip = conf['ip'] + ':' + conf['port']
-        self.node = conf['node']
         self.reload = False
+        self.restart = False
+        self.thread_real_time_names = set()
         self.check_restart_num = 0
         self.handle_restart_num = 0
-        self.redis = RedisWrapper(conf['redis'])
-        self.remote_redis = RedisWrapper(conf['server']['redis'])
 
     @staticmethod
     def _async_raise(tid, exctype):
@@ -80,63 +77,18 @@ class WatchDog:
             for item in threading.enumerate():
                 thread_real_time_names.add(item.name)
 
+            self.thread_real_time_names = thread_real_time_names
+
             different = thread_real_time_names & thread_names
 
             if different != thread_names:
                 dead_threads = thread_names - different
-                self.restart(dead_threads, queue)
+                self.re_start(dead_threads, queue)
 
-            # 获取外部命令，并处理
-            command = self.check_order()
+            if self.reload or self.restart:
+                self.kill(thread_real_time_names)
 
-            if command == 'get_status':
-                self.write_into_local(thread_real_time_names)
-            elif command == 'restart' or command == 'reload':
-                self.kill(self.thread_set)
-
-            self.write_into_remote(thread_real_time_names)
-
-    def check_order(self):
-        """
-        Get outside command
-        :return: None or order
-        """
-        if self.redis.get_len("order_name") > 0:
-            return self.redis.dequeue("order_name")
-
-    def write_into_local(self, thread_real_time_names):
-        """
-        Write the data to local redis
-        :param thread_real_time_names: currently surviving threads
-        :return: None
-        """
-        status = {
-            'ip': self.ip,
-            'node': self.node,
-            'data': self.data,
-            'log_error': self.read_log(),
-            'check_restart_time': self.check_restart_num,
-            'handle_restart_time': self.handle_restart_num,
-            'real_time_thread_name': thread_real_time_names
-        }
-        self.redis.sadd('status', status)
-        self.redis.expire('status', 60 * 5)
-
-    def write_into_remote(self, thread_real_time_names):
-        """
-        Write the data to remote redis
-        :param thread_real_time_names: currently surviving threads
-        :return:
-        """
-        status = {
-            'ip': self.ip,
-            'node': self.node,
-            'data': self.data,
-            'check_restart_time': self.check_restart_num,
-            'handle_restart_time': self.handle_restart_num,
-            'real_time_thread_name': thread_real_time_names
-        }
-        self.remote_redis.hset('node_data', self.node, status)
+            time.sleep(10)
 
     def kill(self, threads):
         """
@@ -146,14 +98,15 @@ class WatchDog:
         """
         for thread in threads:
             self._async_raise(thread.ident, SystemExit)
-            self.reload = True
 
             if thread.name == 'check':
                 self.check_restart_num += 1
             else:
                 self.handle_restart_num += 1
 
-    def restart(self, dead_threads, queue):
+        self.restart = False
+
+    def re_start(self, dead_threads, queue):
         """
         Restart dead thread
         :param dead_threads: dead threads name
@@ -163,6 +116,7 @@ class WatchDog:
         instances = list()
         if self.reload:
             pass
+            self.reload = False
         else:
             instances = [thread for thread in self.instance_set if thread.name in dead_threads]
 
@@ -176,6 +130,3 @@ class WatchDog:
             threads_set[instance.name] = worker
 
             self.thread_set.update(threads_set)
-
-    def read_log(self):
-        pass

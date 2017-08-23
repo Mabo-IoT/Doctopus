@@ -11,7 +11,7 @@ setup(
     packages=find_packages(exclude=[]),
     include_package_data=True,
     license='MIT',
-    install_requires=['pendulum', 'logbook', 'redis',
+    install_requires=['pendulum', 'redis',
                       'influxdb', 'msgpack-python', 'toml', 'u-msgpack-python', 'falcon'],
     entry_points={
         'console_scripts': [

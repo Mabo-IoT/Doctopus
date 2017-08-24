@@ -86,7 +86,7 @@ class WatchDog:
                 self.re_start(dead_threads, queue)
 
             if self.reload or self.restart:
-                self.kill(thread_real_time_names)
+                self.kill(self.thread_set)
 
             time.sleep(10)
 
@@ -96,7 +96,7 @@ class WatchDog:
         :param threads: thread set
         :return:
         """
-        for thread in threads:
+        for thread in threads.values():
             self._async_raise(thread.ident, SystemExit)
 
             if thread.name == 'check':

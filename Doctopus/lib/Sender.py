@@ -5,6 +5,7 @@ import msgpack
 import pendulum
 from logbook import Logger
 from Doctopus.lib.redis_wrapper import RedisWrapper
+from Doctopus.lib.communication import Communication
 
 log = Logger('Sender')
 
@@ -25,6 +26,9 @@ class Sender(object):
         self.enque_log_flag = self.conf['enque_log']
         self.log_format = '\ntable_name: {}\nfields:{}\ntimestamp{}\n'
 
+        #init communication class (singleinstance)
+        self.communication = Communication(configuration)
+
     def work(self, queue, **kwargs):
         """
         send data to redis and watchdog
@@ -37,6 +41,7 @@ class Sender(object):
             data = sender_pipe.get()
             # pack and send data to redis and watchdog
             self.pack(data)
+            self.send_to_communication(data)
 
     def pack(self, data):
         """
@@ -64,6 +69,15 @@ class Sender(object):
         # send data to redis
         lua_info =  self.db.enqueue(table_name=table_name, fields=fields, timestamp=timestamp)
         log.info('\n' + lua_info.decode())
+
+    def send_to_communication(self, data):
+        """
+        send data to communication instance(singleinstance)
+        :param data: 
+        :return: 
+        """
+        self.communication.data = data
+
 
 
 

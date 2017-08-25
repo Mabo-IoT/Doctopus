@@ -4,9 +4,10 @@ import threading
 import ctypes
 import inspect
 import time
+import logging
 
 Lock = threading.RLock()
-
+log = logging.getLogger("Doctopus.watchdog")
 
 class WatchDog:
     INSTANCE = None
@@ -77,6 +78,8 @@ class WatchDog:
             for item in threading.enumerate():
                 thread_real_time_names.add(item.name)
 
+            log.info(thread_real_time_names)
+
             self.thread_real_time_names = thread_real_time_names
 
             different = thread_real_time_names & thread_names
@@ -84,9 +87,11 @@ class WatchDog:
             if different != thread_names:
                 dead_threads = thread_names - different
                 self.re_start(dead_threads, queue)
+                log.info("restart done")
 
             if self.reload or self.restart:
                 self.kill(self.thread_set)
+                log.info("kill done")
 
             time.sleep(10)
 

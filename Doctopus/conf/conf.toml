@@ -1,13 +1,29 @@
 node = '测试'
 
-[web]
-    set_name = 'status'
-    order_status = 'get_status'
+
+[user_conf]
+    [user_conf.check]
+    # check config
+
+    [user_conf.handler]
+    # handler config
+
+
+[sender]
+    lua_path = 'lua\enque_script.lua'
+    enque_log = true
+
 
 [redis]
     db= 1
     host= 'localhost'
     port= 6379
+
+
+[web]
+    set_name = 'status'
+    order_status = 'get_status'
+
 
 [log_configuration]
     console = true
@@ -18,3 +34,4 @@ node = '测试'
     backup_count = 5
     max_size = 10240
     format_string = '(%(asctime)s), %(levelname)s, <%(threadName)s>, %(module)s, %(funcName)s, [%(lineno)d]: %(message)s'
+

@@ -3,11 +3,11 @@ import time
 
 import msgpack
 import pendulum
-from logbook import Logger
-from Doctopus.lib.redis_wrapper import RedisWrapper
+from logging import getLogger
+from Doctopus.lib.database_wrapper import RedisWrapper
 from Doctopus.lib.communication import Communication
 
-log = Logger('Sender')
+log = getLogger('Doctopus.sender')
 
 
 class Sender(object):
@@ -15,10 +15,12 @@ class Sender(object):
     send data to redis and watchdog
     """
     def __init__(self, configuration):
+
+        self.redis_conf = configuration['redis']
         self.conf = configuration['sender']
         self.lua_path = self.conf['lua_path']
 
-        self.redis_conf = self.conf['redis']
+
         self.db = RedisWrapper(self.redis_conf)
         self.db.script_load(self.lua_path)
 
@@ -53,7 +55,7 @@ class Sender(object):
         fields = data['fields']
         timestamp = data['timestamp']
 
-        if unit == 's':
+        if fields['unit'] == 's':
             date_time = pendulum.from_timestamp(timestamp, tz='Asia/Shanghai').to_datetime_string()
         else:
             date_time = pendulum.from_timestamp(timestamp / 1000000, tz='Asia/Shanghai').to_datetime_string()

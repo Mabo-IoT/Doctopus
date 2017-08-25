@@ -23,7 +23,7 @@ def setup_logging(conf):
     max_size = conf['max_size']  # size of each local log file
     format_string = conf['format_string']  # log message format
 
-    log = logging.getLogger('root')
+    log = logging.getLogger('Doctopus')
     log.setLevel(logging.DEBUG)
 
     formatter = logging.Formatter(format_string, datefmt='%Y-%d-%m %H:%M:%S')

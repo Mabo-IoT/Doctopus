@@ -2,6 +2,7 @@
 
 import time
 import pendulum
+import types
 
 try:
     from queue import Queue
@@ -9,11 +10,10 @@ except:
     from Queue import Queue
 
 from threading import Thread
-from logbook import Logger
 from abc import ABCMeta, abstractmethod
+import logging
 
-log = Logger("main")
-
+log = logging.getLogger("Doctopus.main")
 
 class Check(object):
     __metaclass__ = ABCMeta
@@ -58,11 +58,11 @@ class Handler(object):
 
     def __init__(self, configuration):
         self.conf = configuration['user_conf']['handler']
-        self.data_dict = self.make_processed_dict(self.conf)
-        self.field_name_list = self.conf['field_name_list']
-        self.table_name = self.conf['user_conf']['table_name']
-        self.unit = configuration['ziyan'].get('unit', 's')
-        self.data_dict['unit'] = self.unit
+        #self.data_dict = self.make_processed_dict(self.conf)
+        self.field_name_list = self.conf.get('field_name_list',[])
+        self.table_name = self.conf.get('table_name', 'influxdb')
+        self.unit = self.conf.get('unit', 's')
+        #self.data_dict['unit'] = self.unit
 
 
     def work(self, queues, **kwargs):
@@ -77,8 +77,6 @@ class Handler(object):
 
             else:
                 log.error('\nNo data is received')
-
-            time.sleep(1)
 
     def enque_prepare(self, processed_dicts):
         """
@@ -118,14 +116,15 @@ class Handler(object):
 
         # timestamp
 
-        if 'unit' in self.data_dict.keys():
+        if 'unit' in fields.keys():
             # send to influxdb must has "unit"
-            if self.data_dict['unit'] == 's':
+            if processed_dict['unit'] == 's':
                 timestamp = processed_dict.get('timestamp') or pendulum.now().int_timestamp
             else:
                 timestamp = processed_dict.get('timestamp') or int(pendulum.now().float_timestamp * 1000000)
         else:
             # send to other db "unit" is not necessary
+            fields.update({'unit': self.unit})
             timestamp = processed_dict.get('timestamp') or pendulum.now().int_timestamp
 
         # fields.update(influxdb_dict)

@@ -8,6 +8,7 @@ Lock = threading.RLock()
 
 
 class Communication:
+    INSTANCE = None
     def __new__(cls, *args, **kwargs):
         """
         单例模式的 double check 确保线程安全，增加缓冲标量
@@ -36,13 +37,14 @@ class Communication:
     def work(self, *args):
         while True:
             # 获取外部命令，并处理
+
             command = self.check_order()
 
-            if command == 'get_status':
+            if command == b'get_status':
                 self.write_into_local()
-            elif command == 'restart':
+            elif command == b'restart':
                 self.watchdog.restart = True
-            elif command == 'reload':
+            elif command == b'reload':
                 self.watchdog.reload = True
 
             self.write_into_remote()

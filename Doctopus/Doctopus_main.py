@@ -1,19 +1,13 @@
 # -*- coding: utf-8 -*-
 
-import time
-import pendulum
-import types
-
-try:
-    from queue import Queue
-except:
-    from Queue import Queue
-
-from threading import Thread
-from abc import ABCMeta, abstractmethod
 import logging
+import types
+from abc import ABCMeta, abstractmethod
+
+import pendulum
 
 log = logging.getLogger("Doctopus.main")
+
 
 class Check(object):
     __metaclass__ = ABCMeta
@@ -43,14 +37,14 @@ class Check(object):
                 # return data in queue so handler can take
                 data_queue.put(raw_datas)
 
-        @abstractmethod
-        def user_check(self):
-            """
-            user-defined plugin to collect data
-            :param self: 
-            :return: 
-            """
-            pass
+    @abstractmethod
+    def user_check(self):
+        """
+        user-defined plugin to collect data
+        :param self:
+        :return:
+        """
+        pass
 
 
 class Handler(object):
@@ -58,12 +52,9 @@ class Handler(object):
 
     def __init__(self, configuration):
         self.conf = configuration['user_conf']['handler']
-        #self.data_dict = self.make_processed_dict(self.conf)
-        self.field_name_list = self.conf.get('field_name_list',[])
+        self.field_name_list = self.conf.get('field_name_list', [])
         self.table_name = self.conf.get('table_name', 'influxdb')
         self.unit = self.conf.get('unit', 's')
-        #self.data_dict['unit'] = self.unit
-
 
     def work(self, queues, **kwargs):
         while True:
@@ -84,12 +75,11 @@ class Handler(object):
         :param processed_dicts: 
         :return: 
         """
+        data = None
         if isinstance(processed_dicts, (types.GeneratorType, list)):
             for processed_dict in processed_dicts:
-
                 data = self.process_dict(processed_dict)
 
-                # put data in send queue
         elif isinstance(processed_dicts, dict):
 
             data = self.process_dict(processed_dicts)
@@ -102,7 +92,6 @@ class Handler(object):
         :param processed_dict: 
         :return: 
         """
-        # send to where
         table_name = self.table_name
 
         # make fields
@@ -115,7 +104,6 @@ class Handler(object):
             fields = value_list
 
         # timestamp
-
         if 'unit' in fields.keys():
             # send to influxdb must has "unit"
             if processed_dict['unit'] == 's':
@@ -124,7 +112,6 @@ class Handler(object):
                 timestamp = processed_dict.get('timestamp') or int(pendulum.now().float_timestamp * 1000000)
         else:
             # send to other db "unit" is not necessary
-            fields.update({'unit': self.unit})
             timestamp = processed_dict.get('timestamp') or pendulum.now().int_timestamp
 
         # fields.update(influxdb_dict)
@@ -150,4 +137,3 @@ class Handler(object):
         :return: 
         """
         pass
-

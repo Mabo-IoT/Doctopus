@@ -104,7 +104,7 @@ class WatchDog:
         for thread in threads.values():
             self._async_raise(thread.ident, SystemExit)
 
-            if thread.name == 'check':
+            if thread.name == 'checker':
                 self.check_restart_num += 1
             else:
                 self.handle_restart_num += 1

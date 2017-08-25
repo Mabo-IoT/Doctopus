@@ -7,6 +7,9 @@ node = '测试'
 
     [user_conf.handler]
     # handler config
+    table_name = 'test_table'
+    field_name_list = ['Msg']
+    unit = 's'
 
 
 [sender]

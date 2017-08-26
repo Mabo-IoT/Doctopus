@@ -59,12 +59,10 @@ class RedisWrapper:
         :return: lua 脚本返回值
         """
         timestamp = kwargs.pop('timestamp')
-        tags = kwargs.pop('tags')
         fields = kwargs.pop('fields')
-        measurement = kwargs.pop('measurement')
-        unit = kwargs.get('unit', 's')
+        table_name = kwargs.pop('table_name')
 
-        return self.__db.evalsha(self.sha, 1, tags, timestamp, fields, measurement, unit)
+        return self.__db.evalsha(self.sha, 1, table_name, fields, timestamp)
 
     def dequeue(self, key):
         """

@@ -4,6 +4,9 @@ import logging
 import logging.handlers
 import os
 
+from Doctopus.lib.communication import Communication
+from Doctopus.utils.util import get_conf
+
 
 def setup_logging(conf):
     """
@@ -19,6 +22,8 @@ def setup_logging(conf):
     file = conf['file']  # local log file output
     file_level = conf['file_level']  # choose log file level to save
     logfile = conf['log_file']  # local log file save position
+    remote = conf['remote']
+    remote_level = conf['remote_level']
     backup_count = conf['backup_count']  # count of local log files
     max_size = conf['max_size']  # size of each local log file
     format_string = conf['format_string']  # log message format
@@ -48,16 +53,36 @@ def setup_logging(conf):
         ch.setFormatter(formatter)
         log.addHandler(ch)
 
+    if remote:
+        # 实例化一个自定义处理器，将日志输出到 Communication 实例中
+        rh = ErrorRecord()
+        rh.setLevel(level[remote_level])
+        rh.setFormatter(formatter)
+        log.addHandler(rh)
+
     return log
 
 
+class ErrorRecord(logging.Handler):
+    """
+    将日志保存在 Communication 类中，传输至远端
+    """
+    def __init__(self):
+        self.communication = Communication(get_conf())
+        logging.Handler.__init__(self)
+
+    def emit(self, record):
+        msg = self.format(record)
+        self.communication.enqueue_log(msg)
+
+
 def test():
-    log = logging.getLogger("root.test")
+    log = logging.getLogger("Doctopus.test")
     log.warning("函数调用")
 
 
 def test2():
-    log = logging.getLogger("root")
+    log = logging.getLogger("Doctopus")
     log.critical("同名调用")
 
 

@@ -4,7 +4,7 @@ from sys import version_info
 import toml
 
 
-def get_conf(conf_file_path):
+def get_conf(conf_file_path=r'conf/conf.toml'):
     """read toml conf file for latter use.
 
 

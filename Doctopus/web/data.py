@@ -33,7 +33,7 @@ class Status:
             data = self.__listen()
 
             if data:
-                data = data.pop()
+                data = data.pop().decode("utf-8")
                 resp.body = data
             else:
                 resp.body = json.dumps({'data': "No data"})
@@ -64,7 +64,6 @@ class Status:
             if data or time.time() - start_time > timeout:
                 break
                 time.sleep(1)
-        print('break')
 
         return data
 

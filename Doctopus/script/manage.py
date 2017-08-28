@@ -60,7 +60,7 @@ def start():
     # init send set
     send_set = [communication, sender]
     for send in send_set:
-        thread = Thread(target=send.work, args=(queue,))
+        thread = Thread(target=send.work, args=(queue,), name='%s' % send.name)
         thread.setDaemon(True)
         thread.start()
 

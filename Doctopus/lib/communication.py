@@ -41,17 +41,21 @@ class Communication:
         self.name = None
         self.log = list()
 
+        # 重启刷新缓存
+        self.flush_data()
+
     def work(self, *args):
         while True:
             # 获取外部命令，并处理
-
             command = self.check_order()
 
             if command == b'get_status':
                 self.write_into_local()
+
             elif command == b'restart':
                 self.watchdog.restart = True
                 self.flush_data()
+
             elif command == b'reload':
                 self.watchdog.reload = True
                 self.flush_data()
@@ -90,6 +94,10 @@ class Communication:
             log.error("\n%s", e)
 
     def flush_data(self):
+        """
+        Delete the existing key "status"
+        :return:
+        """
         try:
             if self.redis.exists("status"):
                 self.redis.delete("status")
@@ -100,6 +108,11 @@ class Communication:
         pass
 
     def enqueue_log(self, msg):
+        """
+        保存定长的历史 log 日志
+        :param msg: str, log
+        :return:
+        """
         if len(self.log) < 10:
             self.log.append(msg)
         else:

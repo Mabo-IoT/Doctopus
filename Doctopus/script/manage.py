@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 
-import waitress
 import argparse
+
+import waitress
+
 from Doctopus.web.app import get_app
 
 try:
@@ -19,11 +21,12 @@ from Doctopus.lib.communication import Communication
 from Doctopus.lib.logging_init import setup_logging
 from Doctopus.utils.util import get_conf
 
-log = getLogger("start")
+log = getLogger("Doctopus.start")
+
 
 def start():
     # init queues
-    queue = {'data_queue': Queue(), 'sender': Queue() }
+    queue = {'data_queue': Queue(), 'sender': Queue()}
 
     # load all configs
     all_conf = get_conf('conf/conf.toml')
@@ -51,8 +54,6 @@ def start():
     # start workers instance
     for worker in workers:
         thread = Thread(target=worker.work, args=(queue,), name='%s' % worker.name)
-                        #kwargs={'name': worker.name},
-                        #name='%s ' % worker.name)
         thread.setDaemon(True)
         thread.start()
         thread_set[worker.name] = thread
@@ -70,14 +71,16 @@ def start():
     watch.setDaemon(True)
     watch.start()
 
+
 if __name__ == '__main__':
     parse = argparse.ArgumentParser(prog='Doctopus', description='A distributed data collector.')
     parse.add_argument('-a', '--action', action='store', default='run', help='Run/test the project, default run')
     parse.add_argument('-v', '--version', action='version', default=None, version='%(prog)s 0.1.0')
     parse.add_argument('-t', '--target', default='client', choices=['server', 'client'],
                        help='selelct the target, default client')
-    parse.add_argument('-i', '--ip', default='0.0.0.0', help="Hostname or IP address on which to listen, default is '0.0.0.0', "
-                                                               "which means 'all IP addresses on this host'.")
+    parse.add_argument('-i', '--ip', default='0.0.0.0',
+                       help="Hostname or IP address on which to listen, default is '0.0.0.0', "
+                            "which means 'all IP addresses on this host'.")
     parse.add_argument('-p', '--port', default='8000', help="TCP port on which to listen, default is '8000'.")
 
     command = parse.parse_args().action

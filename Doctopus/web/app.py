@@ -5,8 +5,6 @@ from Doctopus.web.data import Status, Reload, Restart, SeverStatus, NodeStatus
 
 from Doctopus.utils.util import get_conf
 
-conf = get_conf('conf/conf.toml')
-
 
 def create_client(conf):
     api = falcon.API()
@@ -25,6 +23,6 @@ def create_server(conf):
 
 def get_app(selection):
     if selection == "client":
-        return create_client(conf)
+        return create_client(get_conf())
     elif selection == "server":
-        return create_server(conf)
+        return create_server(get_conf())

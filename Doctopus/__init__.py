@@ -7,8 +7,6 @@ import shutil
 import traceback
 
 
-
-
 def main():
     """
     Get the project name
@@ -22,6 +20,7 @@ def main():
         make_directory(project.pop())
     else:
         print('type project name, please')
+
 
 def make_directory(name):
     """

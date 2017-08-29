@@ -1,14 +1,15 @@
 # -*- coding: utf-8 -*-
-import redis
+import logging
 import time
-import requests
-
-from influxdb import InfluxDBClient
-from etcd import client
 from logging import getLogger
 
+import redis
+import requests
+from influxdb import InfluxDBClient
 
 log = getLogger("Doctopus.database_wrapper")
+
+log = logging.getLogger("Doctopus.db")
 
 
 class RedisWrapper:
@@ -44,7 +45,7 @@ class RedisWrapper:
                 self.__db.ping()
                 return True
             except (ConnectionError, Exception) as e:
-                # log.error('\n' + str(e) + '\n')
+                log.error('\n%s', e)
                 time.sleep(2)
                 continue
 
@@ -146,6 +147,14 @@ class RedisWrapper:
         "Return a Python dict of the hash's name/value pairs"
         return self.__db.hgetall(name)
 
+    def exists(self, name):
+        "Returns a boolean indicating whether key ``name`` exists"
+        return self.__db.exists(name)
+
+    def delete(self, *names):
+        "Delete one or more keys specified by ``names``"
+        return self.__db.delete(*names)
+
 
 class InfluxdbWrapper:
     """
@@ -224,7 +233,7 @@ class InfluxdbWrapper:
                 i += 1
                 if i > 10:
                     return False
-                # log.error(e)
+                log.error("\n%s", e)
                 time.sleep(2)
 
     def send(self, json_body, time_precision='s', database=None, retention_policy=None):
@@ -279,7 +288,7 @@ class EtcdWrapper:
         url = 'http://' + self.host + ':' + str(self.port) + '/version'
         try:
             data = requests.get(url)
-            if data.status_code == 200
+            if data.status_code == 200:
                 log.info("etcd client init ok!")
                 return True
             else:

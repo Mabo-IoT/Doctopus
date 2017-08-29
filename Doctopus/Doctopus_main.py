@@ -3,6 +3,7 @@
 import logging
 import types
 from abc import ABCMeta, abstractmethod
+from Doctopus.utils.util import get_conf
 
 import pendulum
 
@@ -37,6 +38,10 @@ class Check(object):
                 # return data in queue so handler can take
                 data_queue.put(raw_datas)
 
+    def re_load(self):
+        self.conf = get_conf("conf/conf.toml")
+        return self
+
     @abstractmethod
     def user_check(self):
         """
@@ -57,9 +62,10 @@ class Handler(object):
         self.unit = self.conf.get('unit', 's')
 
     def work(self, queues, **kwargs):
+        self.data_queue = data_queue = queues['data_queue']
+        self.sender_pipe = queues['sender']
+
         while True:
-            self.data_queue = data_queue = queues['data_queue']
-            self.sender_pipe = queues['sender']
             raw_data = data_queue.get()
 
             if raw_data:
@@ -124,6 +130,13 @@ class Handler(object):
         }
 
         return data_dict
+
+    def re_load(self):
+        self.conf = get_conf("conf/conf.toml")['user_conf']['handler']
+        self.field_name_list = self.conf.get('field_name_list', [])
+        self.table_name = self.conf.get('table_name', 'influxdb')
+        self.unit = self.conf.get('unit', 's')
+        return self
 
     @abstractmethod
     def user_handle(self, raw_data):

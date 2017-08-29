@@ -6,6 +6,8 @@ from logging import getLogger
 import redis
 import requests
 from influxdb import InfluxDBClient
+from etcd import Client
+
 
 log = getLogger("Doctopus.database_wrapper")
 

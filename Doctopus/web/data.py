@@ -20,10 +20,14 @@ class Status:
         1.check redis if there has set we need;
         2.if doesn't put get_status order in redis;
         3.listen to redis and take set
+        4.if the parameter flush, refresh the history cache
         :param req: 
         :param resp: 
         :return: 
         """
+        if req.params.get("flush"):
+            self.__redis.delete(self.set_name)
+
         check_data = self.__redis.smembers(self.set_name)
         if check_data:
             resp.body = check_data.pop()
@@ -33,7 +37,7 @@ class Status:
             data = self.__listen()
 
             if data:
-                data = data.pop()
+                data = data.pop().decode("utf-8")
                 resp.body = data
             else:
                 resp.body = json.dumps({'data': "No data"})
@@ -63,8 +67,7 @@ class Status:
             data = self.__redis.smembers(self.set_name)
             if data or time.time() - start_time > timeout:
                 break
-                time.sleep(1)
-        print('break')
+            time.sleep(1)
 
         return data
 

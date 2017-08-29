@@ -1,9 +1,11 @@
 # -*- coding: utf-8 -*-
+import time
 from logging import getLogger
 
 from Doctopus.Doctopus_main import Check, Handler
 
 log = getLogger('Doctopus.plugins')
+
 
 class MyCheck(Check):
     def __init__(self, configuration):
@@ -17,6 +19,7 @@ class MyCheck(Check):
         """
         data = 'check的data'
         log.debug('%s', data)
+        time.sleep(2)
         yield data
 
 

@@ -9,13 +9,13 @@
 --   is longer than the time range (user specified), as a heart beat.
 --The data can be enque at least one of above condition met, or just drop it.^_^
 
---  keys[1]  measurement
+--  keys[1]  table_name
 --  args[1]  fields
 --  args[2]  timestamp
 --set parameters:
 --how much seconds you want your time range is ???
 local time_range = 10
-local measurement = KEYS[1]
+local table_name = KEYS[1]
 local fields = ARGV[1]
 local timestamp = ARGV[2]
 
@@ -76,7 +76,7 @@ f_flag, t_flag = threshold(fields, cmsgpack.unpack(timestamp), time_range)
 if f_flag == true then
 
     local data = {
-        measurement = measurement,
+        measurement = table_name,
         time = timestamp,
         fields = fields,
     }
@@ -89,7 +89,7 @@ elseif t_flag == true then
 
     local data = {
         heartbeat = true,
-        measurement = measurement,
+        measurement = table_name,
         time = timestamp,
         fields = fields,
     }

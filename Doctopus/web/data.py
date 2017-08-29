@@ -129,3 +129,15 @@ class NodeStatus:
             return requests.get(url).text
         else:
             return json.dumps({'data': "No data"})
+
+
+class Upload:
+    def __init__(self, conf):
+        self.__redis = RedisWrapper(conf["redis"])
+
+    def on_get(self, req, resp):
+        self.__redis.rpush("order_name", "upload")
+        resp.body = json.dumps("Upload configuration now, wait please")
+        resp.content_type = "application/json"
+        resp.status = falcon.HTTP_200
+

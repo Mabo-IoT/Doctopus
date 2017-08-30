@@ -4,7 +4,7 @@ import logging
 import threading
 import time
 
-from Doctopus.lib.database_wrapper import RedisWrapper
+from Doctopus.lib.database_wrapper import RedisWrapper, EtcdWrapper
 from Doctopus.lib.watchdog import WatchDog
 
 Lock = threading.RLock()
@@ -35,6 +35,7 @@ class Communication:
 
     def __init__(self, conf):
         self.redis = RedisWrapper(conf['redis'])
+        self.etcd = EtcdWrapper(conf['etcd'])
         self.watchdog = WatchDog(conf)
         self.node = conf['node']
         self.data = None
@@ -59,6 +60,11 @@ class Communication:
             elif command == b'reload':
                 self.watchdog.reload = True
                 self.flush_data()
+
+            elif command == b'upload':
+                paths = ['./conf/conf.toml', './lua/enque_script.lua', './plugins/your_plugin.py']
+                for path in paths:
+                    self.upload(path)
 
             self.write_into_remote()
             time.sleep(0.5)
@@ -92,6 +98,27 @@ class Communication:
             self.redis.expire('status', 60 * 5)
         except Exception as e:
             log.error("\n%s", e)
+
+    def upload(self, path):
+        """
+        upload specific path file
+        :param path: 
+        :return: 
+        """
+        if 'toml' in path:
+            key = '/conf'
+        elif 'py' in path:
+            key = '/code'
+        elif 'lua' in path:
+            key = '/lua'
+
+        try:
+            with open(path, 'rb') as f:
+                self.etcd.write(key, f.read())
+
+        except Exception as e:
+            log.error(e)
+
 
     def flush_data(self):
         """

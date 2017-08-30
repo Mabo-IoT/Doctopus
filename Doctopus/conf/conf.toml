@@ -23,6 +23,11 @@ node = '测试'
     port= 6379
 
 
+[etcd]
+    host = 'localhost'
+    port = 2379
+
+
 [web]
     set_name = 'status'
     order_status = 'get_status'

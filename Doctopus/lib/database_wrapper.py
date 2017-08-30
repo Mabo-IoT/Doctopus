@@ -1,10 +1,15 @@
 # -*- coding: utf-8 -*-
-import redis
-import time
 import logging
-from influxdb import InfluxDBClient
+import time
 
-log = logging.getLogger("Doctopus.db")
+import redis
+import requests
+from influxdb import InfluxDBClient
+from etcd import Client
+
+
+
+log = logging.getLogger("Doctopus.database_wrapper")
 
 
 class RedisWrapper:
@@ -262,3 +267,48 @@ class InfluxdbWrapper:
         :return: always return a list
         """
         return self.__db.query(query)
+
+
+class EtcdWrapper:
+    """
+    Pack etcd library, send data to etcd
+    """
+
+    def __init__(self, conf):
+        self.conf = conf
+        self.host, self.port = self.conf['host'], self.conf['port']
+        self.client = Client(host=self.host, port=self.port)
+        self.test_connect()
+
+    def test_connect(self):
+        """
+        test etcd server
+        :return: 
+        """
+        url = 'http://' + self.host + ':' + str(self.port) + '/version'
+        try:
+            data = requests.get(url)
+            if data.status_code == 200:
+                log.info("etcd client init ok!")
+                return True
+            else:
+                return False
+        except Exception as e:
+            log.error(e)
+            log.info("Check etcd server or network")
+            return False
+
+    def write(self, key, value):
+        try:
+            self.client.write(key, value)
+        except Exception as e:
+            log.error(e)
+            log.info(e)
+
+    def read(self, key, value):
+        try:
+            result = self.client.read(key)
+        except Exception as e:
+            log.error(e)
+            log.info(e)
+        return result

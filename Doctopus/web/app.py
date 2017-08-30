@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import falcon
 
-from Doctopus.web.data import Status, Reload, Restart, SeverStatus, NodeStatus
+from Doctopus.web.data import Status, Reload, Restart, Upload, SeverStatus, NodeStatus
 
 from Doctopus.utils.util import get_conf
 
@@ -11,6 +11,7 @@ def create_client(conf):
     api.add_route('/status/', Status(conf))
     api.add_route('/reload/', Reload(conf))
     api.add_route('/restart/', Restart(conf))
+    api.add_route('/upload/', Upload(conf))
     return api
 
 

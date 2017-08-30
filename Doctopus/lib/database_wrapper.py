@@ -11,8 +11,6 @@ from etcd import Client
 
 log = getLogger("Doctopus.database_wrapper")
 
-log = logging.getLogger("Doctopus.db")
-
 
 class RedisWrapper:
     """

@@ -49,6 +49,9 @@ def make_directory(name):
                 base = os.path.basename(file)
                 shutil.copyfile(file, name + '/conf/' + base)
 
+            # copy confd dirs and files
+
+
             # copy lua files
             for file in glob.glob(filepath + '/conf/*.lua'):
                 shutil.copyfile(file, name + '/lua/enque_script.lua')

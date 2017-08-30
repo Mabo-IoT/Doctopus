@@ -1,5 +1,7 @@
 node = '测试'
-
+local_ip = "10.0.0.1"
+application = "ziyan"
+paths = ['./conf/conf.toml', './lua/enque_script.lua', './plugins/your_plugin.py']
 
 [user_conf]
     [user_conf.check]

@@ -38,6 +38,9 @@ class Communication:
         self.etcd = EtcdWrapper(conf['etcd'])
         self.watchdog = WatchDog(conf)
         self.node = conf['node']
+        self.ip = conf['local_ip']
+        self.app = conf['application']
+        self.paths = conf['paths']
         self.data = None
         self.name = None
         self.log = list()
@@ -62,8 +65,8 @@ class Communication:
                 self.flush_data()
 
             elif command == b'upload':
-                paths = ['./conf/conf.toml', './lua/enque_script.lua', './plugins/your_plugin.py']
-                for path in paths:
+
+                for path in self.paths:
                     self.upload(path)
 
             self.write_into_remote()
@@ -105,19 +108,20 @@ class Communication:
         :param path: 
         :return: 
         """
+        key = "/nodes/" + self.node + "/" + self.app
         if 'toml' in path:
-            key = '/conf'
+            key += '/conf'
         elif 'py' in path:
-            key = '/code'
+            key += '/code'
         elif 'lua' in path:
-            key = '/lua'
+            key += '/lua'
 
         try:
             with open(path, 'rb') as f:
                 self.etcd.write(key, f.read())
 
         except Exception as e:
-            log.error(e)
+            log.error("\n%s", e)
 
 
     def flush_data(self):
@@ -132,7 +136,21 @@ class Communication:
             log.error("\n%s", e)
 
     def write_into_remote(self):
-        pass
+        status = {
+            'node': self.node,
+            'ip': self.ip,
+            'data': self.data,
+            'log': self.log,
+            'check_restart_time': self.watchdog.check_restart_num,
+            'handle_restart_time': self.watchdog.handle_restart_num,
+            'real_time_thread_name': self.watchdog.thread_real_time_names
+        }
+
+        key = "/nodes/" + self.node + "/" + self.app + "/status"
+        try:
+            self.etcd.write(key, status)
+        except Exception as e:
+            log.error("\n%s", e)
 
     def enqueue_log(self, msg):
         """

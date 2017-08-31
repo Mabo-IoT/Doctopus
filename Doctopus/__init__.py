@@ -29,11 +29,19 @@ def make_directory(name):
     |
       -- conf\
     |
+      -- confd\
+       |
+         -- conf.d\
+       |
+         -- templates\
+    |
       -- lua\
     |
       -- plugins\
     |
       -- manage.py
+    |
+      -- confd.exe(confd)
     :param name: project name, str
     :return: None
     """

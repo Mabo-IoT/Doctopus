@@ -2,15 +2,15 @@
 backend = "etcd"
 
 # The path to confd configs.
-confdir = "."
+confdir = "./confd"
+
 # Level which confd should log messages.
-
 log-level = "debug"
+
 # The backend polling interval in seconds.
-
 interval = 30
-# List of backend nodes.
 
+# List of backend nodes.
 nodes = [
     "http://127.0.0.1:2379/"
     ]

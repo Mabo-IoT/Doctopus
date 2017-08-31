@@ -3,7 +3,7 @@
 src = "conf.tmpl"
 
 # The target file you want to update
-dest = './../conf/conf.toml'
+dest = './conf/conf.toml'
 
 # An array of keys which in etcd.
 keys = ["/conf"]

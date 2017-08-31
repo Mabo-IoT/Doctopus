@@ -50,7 +50,7 @@ def make_directory(name):
                 shutil.copyfile(file, name + '/conf/' + base)
 
             # copy confd dirs and files
-
+            shutil.copytree(filepath + '/confd/', name + '/confd/')
 
             # copy lua files
             for file in glob.glob(filepath + '/conf/*.lua'):

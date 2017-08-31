@@ -2,7 +2,7 @@
 
 import logging
 import threading
-import time
+import asyncio
 
 from Doctopus.lib.database_wrapper import RedisWrapper, EtcdWrapper
 from Doctopus.lib.watchdog import WatchDog
@@ -38,6 +38,9 @@ class Communication:
         self.etcd = EtcdWrapper(conf['etcd'])
         self.watchdog = WatchDog(conf)
         self.node = conf['node']
+        self.ip = conf['local_ip']
+        self.app = conf['application']
+        self.paths = conf['paths']
         self.data = None
         self.name = None
         self.log = list()
@@ -46,6 +49,22 @@ class Communication:
         self.flush_data()
 
     def work(self, *args):
+        """
+        获取 event loop，并启动异步循环
+        :param args:
+        :return:
+        """
+        loop = asyncio.SelectorEventLoop()
+        asyncio.set_event_loop(loop)
+        loop.call_soon_threadsafe(loop.create_task, self.handle())
+        loop.call_soon_threadsafe(loop.create_task, self.write_into_remote())
+        loop.run_forever()
+
+    async def handle(self):
+        """
+        异步方法，监听 redis 给出的命令
+        :return:
+        """
         while True:
             # 获取外部命令，并处理
             command = self.check_order()
@@ -62,12 +81,10 @@ class Communication:
                 self.flush_data()
 
             elif command == b'upload':
-                paths = ['./conf/conf.toml', './lua/enque_script.lua', './plugins/your_plugin.py']
-                for path in paths:
-                    self.upload(path)
 
-            self.write_into_remote()
-            time.sleep(0.5)
+                for path in self.paths:
+                    self.upload(path)
+            await asyncio.sleep(0.5)
 
     def check_order(self):
         """
@@ -105,19 +122,20 @@ class Communication:
         :param path: 
         :return: 
         """
+        key = "/nodes/" + self.node + "/" + self.app
         if 'toml' in path:
-            key = '/conf'
+            key += '/conf'
         elif 'py' in path:
-            key = '/code'
+            key += '/code'
         elif 'lua' in path:
-            key = '/lua'
+            key += '/lua'
 
         try:
             with open(path, 'rb') as f:
                 self.etcd.write(key, f.read())
 
         except Exception as e:
-            log.error(e)
+            log.error("\n%s", e)
 
 
     def flush_data(self):
@@ -131,8 +149,30 @@ class Communication:
         except Exception as e:
             log.error("\n%s", e)
 
-    def write_into_remote(self):
-        pass
+    async def write_into_remote(self):
+        """
+        异步方法，每10分钟向服务器 etcd 中注册当前状态
+        :return:
+        """
+        while True:
+            status = {
+                'node': self.node,
+                'ip': self.ip,
+                'data': self.data,
+                'log': self.log,
+                'check_restart_time': self.watchdog.check_restart_num,
+                'handle_restart_time': self.watchdog.handle_restart_num,
+                'real_time_thread_name': self.watchdog.thread_real_time_names
+            }
+
+            key = "/nodes/" + self.node + "/" + self.app + "/status"
+            try:
+                self.etcd.write(key, status)
+                log.debug("\nkey:%s\ndata:%s\n", key, status)
+            except Exception as e:
+                log.error("\n%s", e)
+
+            await asyncio.sleep(10 * 60)
 
     def enqueue_log(self, msg):
         """

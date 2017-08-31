@@ -7,8 +7,6 @@ import requests
 from influxdb import InfluxDBClient
 from etcd import Client
 
-
-
 log = logging.getLogger("Doctopus.database_wrapper")
 
 
@@ -229,7 +227,7 @@ class InfluxdbWrapper:
             try:
                 self.query("show measurements limit 1")
                 return True
-            except  Exception as e:
+            except Exception as e:
                 i += 1
                 if i > 10:
                     return False
@@ -294,7 +292,7 @@ class EtcdWrapper:
             else:
                 return False
         except Exception as e:
-            log.error(e)
+            log.error("\n%s", e)
             log.info("Check etcd server or network")
             return False
 
@@ -302,13 +300,16 @@ class EtcdWrapper:
         try:
             self.client.write(key, value)
         except Exception as e:
-            log.error(e)
-            log.info(e)
+            log.error("\n%s", e)
 
     def read(self, key, value):
         try:
-            result = self.client.read(key)
+            return self.client.read(key)
         except Exception as e:
-            log.error(e)
-            log.info(e)
-        return result
+            log.error("\n%s", e)
+
+    def delete(self, key):
+        try:
+            return self.client.delete(key)
+        except Exception as e:
+            log.error("\n%s", e)

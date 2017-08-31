@@ -2,7 +2,7 @@
 
 import logging
 import threading
-import time
+import asyncio
 
 from Doctopus.lib.database_wrapper import RedisWrapper, EtcdWrapper
 from Doctopus.lib.watchdog import WatchDog
@@ -49,6 +49,22 @@ class Communication:
         self.flush_data()
 
     def work(self, *args):
+        """
+        获取 event loop，并启动异步循环
+        :param args:
+        :return:
+        """
+        loop = asyncio.SelectorEventLoop()
+        asyncio.set_event_loop(loop)
+        loop.call_soon_threadsafe(loop.create_task, self.handle())
+        loop.call_soon_threadsafe(loop.create_task, self.write_into_remote())
+        loop.run_forever()
+
+    async def handle(self):
+        """
+        异步方法，监听 redis 给出的命令
+        :return:
+        """
         while True:
             # 获取外部命令，并处理
             command = self.check_order()
@@ -68,9 +84,7 @@ class Communication:
 
                 for path in self.paths:
                     self.upload(path)
-
-            self.write_into_remote()
-            time.sleep(0.5)
+            await asyncio.sleep(0.5)
 
     def check_order(self):
         """
@@ -135,22 +149,30 @@ class Communication:
         except Exception as e:
             log.error("\n%s", e)
 
-    def write_into_remote(self):
-        status = {
-            'node': self.node,
-            'ip': self.ip,
-            'data': self.data,
-            'log': self.log,
-            'check_restart_time': self.watchdog.check_restart_num,
-            'handle_restart_time': self.watchdog.handle_restart_num,
-            'real_time_thread_name': self.watchdog.thread_real_time_names
-        }
+    async def write_into_remote(self):
+        """
+        异步方法，每10分钟向服务器 etcd 中注册当前状态
+        :return:
+        """
+        while True:
+            status = {
+                'node': self.node,
+                'ip': self.ip,
+                'data': self.data,
+                'log': self.log,
+                'check_restart_time': self.watchdog.check_restart_num,
+                'handle_restart_time': self.watchdog.handle_restart_num,
+                'real_time_thread_name': self.watchdog.thread_real_time_names
+            }
 
-        key = "/nodes/" + self.node + "/" + self.app + "/status"
-        try:
-            self.etcd.write(key, status)
-        except Exception as e:
-            log.error("\n%s", e)
+            key = "/nodes/" + self.node + "/" + self.app + "/status"
+            try:
+                self.etcd.write(key, status)
+                log.debug("\nkey:%s\ndata:%s\n", key, status)
+            except Exception as e:
+                log.error("\n%s", e)
+
+            await asyncio.sleep(10 * 60)
 
     def enqueue_log(self, msg):
         """

@@ -307,3 +307,9 @@ class EtcdWrapper:
             return self.client.read(key)
         except Exception as e:
             log.error("\n%s", e)
+
+    def delete(self, key):
+        try:
+            return self.client.delete(key)
+        except Exception as e:
+            log.error("\n%s", e)

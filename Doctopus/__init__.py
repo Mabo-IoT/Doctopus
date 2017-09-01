@@ -29,11 +29,19 @@ def make_directory(name):
     |
       -- conf\
     |
+      -- confd\
+       |
+         -- conf.d\
+       |
+         -- templates\
+    |
       -- lua\
     |
       -- plugins\
     |
       -- manage.py
+    |
+      -- confd.exe(confd)
     :param name: project name, str
     :return: None
     """
@@ -48,6 +56,9 @@ def make_directory(name):
             for file in glob.glob(filepath + '/conf/*.toml'):
                 base = os.path.basename(file)
                 shutil.copyfile(file, name + '/conf/' + base)
+
+            # copy confd dirs and files
+            shutil.copytree(filepath + '/confd/', name + '/confd/')
 
             # copy lua files
             for file in glob.glob(filepath + '/conf/*.lua'):

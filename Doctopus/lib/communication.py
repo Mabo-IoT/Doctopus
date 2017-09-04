@@ -36,6 +36,7 @@ class Communication:
     def __init__(self, conf):
         self.redis = RedisWrapper(conf['redis'])
         self.etcd = EtcdWrapper(conf['etcd'])
+        self.etcd_interval_time = conf['etcd']['interval']
         self.watchdog = WatchDog(conf)
         self.node = conf['node']
         self.ip = conf['local_ip']
@@ -172,7 +173,7 @@ class Communication:
             except Exception as e:
                 log.error("\n%s", e)
 
-            await asyncio.sleep(10 * 60)
+            await asyncio.sleep(self.etcd_interval_time)
 
     def enqueue_log(self, msg):
         """

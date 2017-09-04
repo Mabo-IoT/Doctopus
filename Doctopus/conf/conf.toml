@@ -1,4 +1,4 @@
-node = '测试'
+node = 'test'
 local_ip = "10.0.0.1"
 application = "ziyan"
 paths = ['./conf/conf.toml', './lua/enque_script.lua', './plugins/your_plugin.py']
@@ -28,6 +28,9 @@ paths = ['./conf/conf.toml', './lua/enque_script.lua', './plugins/your_plugin.py
 [etcd]
     host = 'localhost'
     port = 2379
+
+    # register status data to etcd server interval time (s)
+    interval = 600
 
 
 [web]

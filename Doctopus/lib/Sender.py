@@ -27,7 +27,7 @@ class Sender(object):
 
         # log format
         self.enque_log_flag = self.conf['enque_log']
-        self.log_format = '\ntable_name: {}\nfields:{}\ntimestamp:{}\n'
+        self.log_format = '\ntable_name: {}\nfields: {}\ntimestamp: {}\n'
 
         # init communication class (singleinstance)
         self.communication = Communication(configuration)

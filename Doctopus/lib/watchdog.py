@@ -42,7 +42,13 @@ class WatchDog:
         self.thread_real_time_names = set()
         self.check_restart_num = 0
         self.handle_restart_num = 0
+        self.transport_restart_num = 0
         self.communication = Communication(conf)
+        self._name = 'watchdog'
+
+    @property
+    def name(self):
+        return self._name
 
     @staticmethod
     def _async_raise(tid, exctype):
@@ -110,8 +116,10 @@ class WatchDog:
 
             if thread.name == 'checker':
                 self.check_restart_num += 1
-            else:
+            elif thread.name == 'handler':
                 self.handle_restart_num += 1
+            else:
+                self.transport_restart_num += 1
 
         self.restart = False
 

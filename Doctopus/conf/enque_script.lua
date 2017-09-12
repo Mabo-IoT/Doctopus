@@ -76,7 +76,7 @@ f_flag, t_flag = threshold(fields, cmsgpack.unpack(timestamp), time_range)
 if f_flag == true then
 
     local data = {
-        measurement = table_name,
+        table_name = table_name,
         time = timestamp,
         fields = fields,
     }
@@ -89,7 +89,7 @@ elseif t_flag == true then
 
     local data = {
         heartbeat = true,
-        measurement = table_name,
+        table_name = table_name,
         time = timestamp,
         fields = fields,
     }

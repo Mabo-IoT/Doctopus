@@ -6,7 +6,7 @@ import logging
 import threading
 import time
 
-from Doctopus.lib.communication import Communication
+import Doctopus.lib.communication
 
 Lock = threading.RLock()
 log = logging.getLogger("Doctopus.watchdog")
@@ -43,7 +43,7 @@ class WatchDog:
         self.check_restart_num = 0
         self.handle_restart_num = 0
         self.transport_restart_num = 0
-        self.communication = Communication(conf)
+        self.communication = Doctopus.lib.communication.Communication(conf)
         self._name = 'watchdog'
 
     @property

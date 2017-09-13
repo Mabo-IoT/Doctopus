@@ -13,7 +13,6 @@ except:
 
 from logging import getLogger
 from threading import Thread
-from plugins.your_plugin import *
 
 from Doctopus.lib.Sender import Sender
 from Doctopus.lib.watchdog import WatchDog
@@ -26,6 +25,8 @@ log = getLogger("Doctopus.start")
 
 
 def start_ziyan():
+    from plugins.your_plugin import Mycheck, MyHandler
+
     # init queues
     queue = {'data_queue': Queue(), 'sender': Queue()}
 

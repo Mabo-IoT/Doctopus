@@ -12,17 +12,20 @@ def main():
     Get the project name
     :return: None
     """
-    parse = argparse.ArgumentParser()
+    parse = argparse.ArgumentParser(usage="\ndoctopus_make project [-h] [-t {ziyan, chitu} ]")
     parse.add_argument('project', help='project name', nargs='?')
     parse.add_argument('-t', '--target', choices=['ziyan', 'chitu'], default='ziyan',
                        help='selelct the target, default ziyan')
     project = parse.parse_args().project
     target = parse.parse_args().target
 
-    if target == 'ziyan':
+    if not project:
+        parse.print_help()
+
+    elif target == 'ziyan':
         make_ziyan(project)
 
-    if target == 'chitu':
+    elif target == 'chitu':
         make_chitu(project)
 
 

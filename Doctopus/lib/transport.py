@@ -37,6 +37,10 @@ class Transport:
                     time.sleep(3)
 
     def unpack(self):
+        """
+        Get data from redis and unpack it
+        :return: dict
+        """
         data_len = self.redis.get_len("data_queue")
         data = dict()
 
@@ -56,6 +60,11 @@ class Transport:
         return data
 
     def pack(self, data):
+        """
+        Converts the data to the format required for the corresponding database
+        :param data: dict
+        :return: the format data, usually dict
+        """
         if data:
             if self.to_where == 'influxdb':
                 try:
@@ -82,6 +91,11 @@ class Transport:
                     log.error("\n%s", e)
 
     def send(self, data):
+        """
+        Sent to the corresponding database
+        :param data: dict
+        :return: None
+        """
         if self.to_where == 'influxdb':
             time_precision = data[0].pop('unit')
             info = self.db.send(data, time_precision)

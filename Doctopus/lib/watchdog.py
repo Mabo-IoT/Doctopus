@@ -1,13 +1,16 @@
 # -*- coding: utf-8 -*-
 
-import threading
 import ctypes
 import inspect
-import time
 import logging
+import threading
+import time
+
+from Doctopus.lib.communication import Communication
 
 Lock = threading.RLock()
 log = logging.getLogger("Doctopus.watchdog")
+
 
 class WatchDog:
     INSTANCE = None
@@ -39,6 +42,7 @@ class WatchDog:
         self.thread_real_time_names = set()
         self.check_restart_num = 0
         self.handle_restart_num = 0
+        self.communication = Communication(conf)
 
     @staticmethod
     def _async_raise(tid, exctype):
@@ -122,6 +126,7 @@ class WatchDog:
         if self.reload:
             self.instance_set = [instance.re_load() for instance in self.instance_set]
             self.reload = False
+            self.communication.re_load()
             instances = self.instance_set
         else:
             instances = [thread for thread in self.instance_set if thread.name in dead_threads]

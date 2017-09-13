@@ -1,11 +1,12 @@
 # -*- coding: utf-8 -*-
 
+import asyncio
 import logging
 import threading
-import asyncio
 
 from Doctopus.lib.database_wrapper import RedisWrapper, EtcdWrapper
 from Doctopus.lib.watchdog import WatchDog
+from Doctopus.utils.util import get_conf
 
 Lock = threading.RLock()
 log = logging.getLogger("Doctopus.communication")
@@ -138,7 +139,6 @@ class Communication:
         except Exception as e:
             log.error("\n%s", e)
 
-
     def flush_data(self):
         """
         Delete the existing key "status"
@@ -169,7 +169,7 @@ class Communication:
             key = "/nodes/" + self.node + "/" + self.app + "/status"
             try:
                 self.etcd.write(key, status)
-                log.debug("\nkey:%s\ndata:%s\n", key, status)
+                log.debug("\nkey: %s\ndata: %s\n", key, status)
             except Exception as e:
                 log.error("\n%s", e)
 
@@ -186,3 +186,10 @@ class Communication:
         else:
             self.log.pop(0)
             self.log.append(msg)
+
+    def re_load(self):
+        self.node = get_conf()['node']
+        self.ip = get_conf()['local_ip']
+        self.app = get_conf()['application']
+        self.paths = get_conf()['paths']
+        self.etcd_interval_time = get_conf()['etcd']['interval']

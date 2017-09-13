@@ -69,8 +69,14 @@ class Transport:
             if self.to_where == 'influxdb':
                 try:
                     measurement = data['table_name']
-                    tags = data['fields'].pop("tags")
-                    unit = data['fields'].pop('unit')
+                    tags = data['fields'].get("tags")
+                    if tags:
+                        data['fields'].pop('tags')
+
+                    unit = data['fields'].get('unit')
+                    if unit:
+                        data['fields'].pop('unit')
+
                     fields = data['fields']
                     timestamp = data['time']
 

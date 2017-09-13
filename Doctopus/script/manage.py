@@ -72,6 +72,7 @@ def start_ziyan():
     watch.setDaemon(True)
     watch.start()
 
+
 def start_chitu():
     # load all configs
     all_conf = get_conf('conf/conf.toml')
@@ -106,7 +107,9 @@ def start_chitu():
 
 
 if __name__ == '__main__':
-    parse = argparse.ArgumentParser(prog='Doctopus', description='A distributed data collector.')
+    parse = argparse.ArgumentParser(prog='Doctopus', description='A distributed data collector.',
+                                    usage="\n"
+                                          "python manage.py [-h] [-a ACTION] [-v] [-t {ziyan,chitu}] [-i IP] [-p PORT]")
     parse.add_argument('-a', '--action', action='store', default='run', help='Run/test the project, default run')
     parse.add_argument('-v', '--version', action='version', default=None, version='%(prog)s 0.1.0')
     parse.add_argument('-t', '--target', default='ziyan', choices=['ziyan', 'chitu'],

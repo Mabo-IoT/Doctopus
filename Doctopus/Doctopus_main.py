@@ -109,8 +109,11 @@ class Handler(object):
         else:
             fields = value_list
 
+        fields['tags'] = processed_dict.get('tags')
+        fields['unit'] = self.unit
+
         # timestamp
-        if 'unit' in fields.keys():
+        if 'unit' in processed_dict.keys():
             # send to influxdb must has "unit"
             if processed_dict['unit'] == 's':
                 timestamp = processed_dict.get('timestamp') or pendulum.now().int_timestamp

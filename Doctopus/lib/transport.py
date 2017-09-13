@@ -69,19 +69,12 @@ class Transport:
             if self.to_where == 'influxdb':
                 try:
                     measurement = data['table_name']
-                    tags = data['fields'].get("tags")
-                    if tags:
-                        data['fields'].pop('tags')
+                    tags = data['fields'].pop('tags')
 
-                    unit = data['fields'].get('unit')
-                    if unit:
-                        data['fields'].pop('unit')
+                    unit = data['fields'].pop('unit')
 
                     fields = data['fields']
                     timestamp = data['time']
-
-                    if data.get('hearbeat'):
-                        tags['Heartbeat'] = 'yes'
 
                     json_data = [
                         {
@@ -95,6 +88,9 @@ class Transport:
                     return json_data
                 except Exception as e:
                     log.error("\n%s", e)
+            else:
+                data['fields'].pop('tags')
+                data['fields'].pop('unit')
 
     def send(self, data):
         """
@@ -126,3 +122,4 @@ class Transport:
 
         if self.to_where == 'influxdb':
             self.db = InfluxdbWrapper(conf['influxdb'])
+        return self

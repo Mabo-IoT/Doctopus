@@ -25,7 +25,7 @@ log = getLogger("Doctopus.start")
 
 
 def start_ziyan():
-    from plugins.your_plugin import Mycheck, MyHandler
+    from plugins.your_plugin import MyCheck, MyHandler
 
     # init queues
     queue = {'data_queue': Queue(), 'sender': Queue()}

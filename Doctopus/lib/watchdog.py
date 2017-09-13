@@ -6,7 +6,6 @@ import logging
 import threading
 import time
 
-import Doctopus.lib.communication
 
 Lock = threading.RLock()
 log = logging.getLogger("Doctopus.watchdog")
@@ -43,7 +42,6 @@ class WatchDog:
         self.check_restart_num = 0
         self.handle_restart_num = 0
         self.transport_restart_num = 0
-        self.communication = Doctopus.lib.communication.Communication(conf)
         self._name = 'watchdog'
 
     @property
@@ -134,7 +132,6 @@ class WatchDog:
         if self.reload:
             self.instance_set = [instance.re_load() for instance in self.instance_set]
             self.reload = False
-            self.communication.re_load()
             instances = self.instance_set
         else:
             instances = [thread for thread in self.instance_set if thread.name in dead_threads]

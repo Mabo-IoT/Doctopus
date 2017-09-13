@@ -85,6 +85,7 @@ class Communication:
             elif command == b'reload':
                 self.watchdog.reload = True
                 self.flush_data()
+                self.re_load()
 
             elif command == b'upload':
 

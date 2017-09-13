@@ -1,5 +1,5 @@
 ## Doctopus
-A distributed data collector. The [ziyan](https://github.com/maboss-YCMan/ziyan) upgrade version.
+A distributed data collector. The [ziyan](https://github.com/maboss-YCMan/ziyan) and [chitu](https://github.com/maboss-YCMan/chitu) upgrade version.
 
 ## Support
 

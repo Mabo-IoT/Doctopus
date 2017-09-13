@@ -98,7 +98,7 @@ class Handler(object):
         :param processed_dict: 
         :return: 
         """
-        table_name = self.table_name
+        table_name = processed_dict.get('table_name') or self.table_name
 
         # make fields
         value_list = processed_dict.get('data_value')

@@ -9,7 +9,7 @@ from Doctopus.lib.watchdog import WatchDog
 from Doctopus.utils.util import get_conf
 
 Lock = threading.RLock()
-log = logging.getLogger("Doctopus.communication")
+log = logging.getLogger(__name__)
 
 
 class Communication:

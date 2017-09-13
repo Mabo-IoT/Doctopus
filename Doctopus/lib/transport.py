@@ -8,7 +8,7 @@ from Doctopus.lib.communication import Communication
 from Doctopus.lib.database_wrapper import InfluxdbWrapper, RedisWrapper
 from Doctopus.utils.util import get_conf
 
-log = logging.getLogger("Doctopus.transport")
+log = logging.getLogger(__name__)
 
 
 class Transport:

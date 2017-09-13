@@ -8,7 +8,7 @@ import time
 
 
 Lock = threading.RLock()
-log = logging.getLogger("Doctopus.watchdog")
+log = logging.getLogger(__name__)
 
 
 class WatchDog:

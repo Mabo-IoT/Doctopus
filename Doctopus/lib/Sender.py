@@ -8,7 +8,7 @@ import pendulum
 from Doctopus.lib.communication import Communication
 from Doctopus.lib.database_wrapper import RedisWrapper
 
-log = getLogger('Doctopus.sender')
+log = getLogger(__name__)
 
 
 class Sender(object):

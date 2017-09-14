@@ -19,15 +19,16 @@ Depends on Redis and Etcd
 ## Usage
 
 ```
-$ doctopus_make -h
+$ doctopus -h
 usage:
-doctopus_make project [-h] [-t {ziyan, chitu} ]
+doctopus project [-h] [-t {ziyan, chitu} ] [-v]
 
 positional arguments:
   project               project name
 
 optional arguments:
   -h, --help            show this help message and exit
+  -v, --version         show program's version number and exit
   -t {ziyan,chitu}, --target {ziyan,chitu}
                         selelct the target, default ziyan
 ```
@@ -87,7 +88,7 @@ $ http 127.0.0.1:8000/upload
 Generate project catalogs:
 
 ```
-$ doctopus_make project_name
+$ doctopus project_name
 
 $ cd project_name
 
@@ -101,7 +102,7 @@ Write the logical and custom configuration of the fetch data in the plugin
 ### chitu
 
 ```
-$ doctopus_make project_name -t chitu
+$ doctopus project_name -t chitu
 
 $ cd project_name
 

@@ -7,7 +7,7 @@ import requests
 from influxdb import InfluxDBClient
 from etcd import Client
 
-log = logging.getLogger("Doctopus.database_wrapper")
+log = logging.getLogger(__name__)
 
 
 class RedisWrapper:

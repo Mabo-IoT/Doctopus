@@ -1,29 +1,25 @@
 node = 'test'
 local_ip = "10.0.0.1"
-application = "ziyan"
-paths = ['./conf/conf.toml', './lua/enque_script.lua', './plugins/your_plugin.py']
+application = "chitu"
+paths = ['./conf/conf.toml']
 
-[user_conf]
-    [user_conf.check]
-    # check config
-
-    [user_conf.handler]
-    # handler config
-    table_name = 'test_table'
-    field_name_list = ['Msg']
-    unit = 's'
-
-
-[sender]
-    lua_path = 'lua\enque_script.lua'
-    enque_log = true
-
+send_to_where = 'influxdb'
 
 [redis]
-    db= 1
-    host= 'localhost'
-    port= 6379
+    [[redis.address]]
+    # local ip or remote ip ?
+    host = "127.0.0.1"
+    # which port is your redis server host?
+    port = 6379
+    # which db your data reside in ?
+    db = 1
 
+[influxdb]
+    host = "10.203.96.26"
+    port = 8086
+    username ="eimuserw"
+    password = "max2016s0luto9"
+    db = "patac_eim"
 
 [etcd]
     host = 'localhost'
@@ -32,11 +28,9 @@ paths = ['./conf/conf.toml', './lua/enque_script.lua', './plugins/your_plugin.py
     # register status data to etcd server interval time (s)
     interval = 600
 
-
 [web]
     set_name = 'status'
     order_status = 'get_status'
-
 
 [log_configuration]
     console = true
@@ -49,4 +43,3 @@ paths = ['./conf/conf.toml', './lua/enque_script.lua', './plugins/your_plugin.py
     backup_count = 5
     max_size = 10240
     format_string = '(%(asctime)s), %(levelname)s, <%(threadName)s>, %(module)s, %(funcName)s, [%(lineno)d]: %(message)s'
-

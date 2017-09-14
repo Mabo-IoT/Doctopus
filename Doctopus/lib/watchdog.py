@@ -6,10 +6,9 @@ import logging
 import threading
 import time
 
-from Doctopus.lib.communication import Communication
 
 Lock = threading.RLock()
-log = logging.getLogger("Doctopus.watchdog")
+log = logging.getLogger(__name__)
 
 
 class WatchDog:
@@ -42,7 +41,12 @@ class WatchDog:
         self.thread_real_time_names = set()
         self.check_restart_num = 0
         self.handle_restart_num = 0
-        self.communication = Communication(conf)
+        self.transport_restart_num = 0
+        self._name = 'watchdog'
+
+    @property
+    def name(self):
+        return self._name
 
     @staticmethod
     def _async_raise(tid, exctype):
@@ -110,8 +114,10 @@ class WatchDog:
 
             if thread.name == 'checker':
                 self.check_restart_num += 1
-            else:
+            elif thread.name == 'handler':
                 self.handle_restart_num += 1
+            else:
+                self.transport_restart_num += 1
 
         self.restart = False
 
@@ -126,7 +132,6 @@ class WatchDog:
         if self.reload:
             self.instance_set = [instance.re_load() for instance in self.instance_set]
             self.reload = False
-            self.communication.re_load()
             instances = self.instance_set
         else:
             instances = [thread for thread in self.instance_set if thread.name in dead_threads]

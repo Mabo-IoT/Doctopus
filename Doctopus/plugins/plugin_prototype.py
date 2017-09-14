@@ -41,13 +41,13 @@ class MyHandler(Handler):
         list:
         {'data_value':[list] , required
         'tags':[dict],        optional
-        'measurement',[str]   optional
+        'table_name',[str]   optional
         'timestamp',int}      optional
 
         dict：
         {'data_value':{'fieldname': value} , required
         'tags':[dict],        optional
-        'measurement',[str]   optional
+        'table_name',[str]   optional
         'timestamp',int}      optional
 
         :param raw_data: 

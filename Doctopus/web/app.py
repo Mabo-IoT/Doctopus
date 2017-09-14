@@ -22,7 +22,7 @@ def create_server(conf):
     return api
 
 
-def get_app(selection):
+def get_app(selection='client'):
     if selection == "client":
         return create_client(get_conf())
     elif selection == "server":

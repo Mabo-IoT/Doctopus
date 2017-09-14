@@ -12,17 +12,29 @@ def main():
     Get the project name
     :return: None
     """
-    namespace, project = argparse.ArgumentParser().parse_known_args()
+    parse = argparse.ArgumentParser(prog="Doctopus", usage="\ndoctopus project [-h] [-t {ziyan, chitu} ] [-v]")
+    parse.add_argument('project', help='project name', nargs='?')
+    parse.add_argument('-t', '--target', choices=['ziyan', 'chitu'], default='ziyan',
+                       help='selelct the target, default ziyan')
+    parse.add_argument('-v', '--version', action='version', default=None, version='%(prog)s 0.2.0')
+    project = parse.parse_args().project
+    target = parse.parse_args().target
+    version = parse.parse_args().version
 
-    if project:
-        if len(project) >= 2:
-            print('error, just require one argument, but more')
-        make_directory(project.pop())
-    else:
-        print('type project name, please')
+    if not project:
+        parse.print_help()
+
+    elif version:
+        print(version)
+
+    elif target == 'ziyan':
+        make_ziyan(project)
+
+    elif target == 'chitu':
+        make_chitu(project)
 
 
-def make_directory(name):
+def make_ziyan(name):
     """
     create a new project directory like follow:
     -name
@@ -53,9 +65,8 @@ def make_directory(name):
             filepath = os.path.split(os.path.realpath(__file__))[0]
 
             # copy conf files
-            for file in glob.glob(filepath + '/conf/*.toml'):
-                base = os.path.basename(file)
-                shutil.copyfile(file, name + '/conf/' + base)
+            for file in glob.glob(filepath + '/conf/ziyan_conf.toml'):
+                shutil.copyfile(file, name + '/conf/conf.toml')
 
             # copy confd dirs and files
             shutil.copytree(filepath + '/confd/', name + '/confd/')
@@ -71,6 +82,41 @@ def make_directory(name):
                     shutil.copyfile(file, name + '/plugins/' + 'your_plugin.py')
                 else:
                     shutil.copyfile(file, name + '/plugins/' + base_name)
+
+            shutil.copyfile(filepath + '/script/manage.py', name + '/manage.py')
+    except Exception as e:
+        traceback.print_exc()
+
+def make_chitu(name):
+    """
+        create a new project directory like follow:
+        -name
+        |
+          -- conf\
+        |
+          -- confd\
+           |
+             -- conf.d\
+           |
+             -- templates\
+        |
+          -- manage.py
+        |
+          -- confd.exe(confd)
+        :param name: project name, str
+        :return: None
+        """
+    try:
+        if not os.path.exists(name):
+            os.makedirs(name + '/conf')
+            filepath = os.path.split(os.path.realpath(__file__))[0]
+
+            # copy conf files
+            for file in glob.glob(filepath + '/conf/chitu_conf.toml'):
+                shutil.copyfile(file, name + '/conf/conf.toml')
+
+            # copy confd dirs and files
+            shutil.copytree(filepath + '/confd/', name + '/confd/')
 
             shutil.copyfile(filepath + '/script/manage.py', name + '/manage.py')
     except Exception as e:

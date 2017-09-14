@@ -3,13 +3,14 @@
 import asyncio
 import logging
 import threading
+import json
 
 from Doctopus.lib.database_wrapper import RedisWrapper, EtcdWrapper
 from Doctopus.lib.watchdog import WatchDog
 from Doctopus.utils.util import get_conf
 
 Lock = threading.RLock()
-log = logging.getLogger("Doctopus.communication")
+log = logging.getLogger(__name__)
 
 
 class Communication:
@@ -44,11 +45,15 @@ class Communication:
         self.app = conf['application']
         self.paths = conf['paths']
         self.data = None
-        self.name = None
+        self._name = 'communication'
         self.log = list()
 
         # 重启刷新缓存
         self.flush_data()
+
+    @property
+    def name(self):
+        return self._name
 
     def work(self, *args):
         """
@@ -81,6 +86,7 @@ class Communication:
             elif command == b'reload':
                 self.watchdog.reload = True
                 self.flush_data()
+                self.re_load()
 
             elif command == b'upload':
 
@@ -104,14 +110,23 @@ class Communication:
         Write the data to local redis
         :return: None
         """
-        status = {
-            'node': self.node,
-            'data': self.data,
-            'log': self.log,
-            'check_restart_time': self.watchdog.check_restart_num,
-            'handle_restart_time': self.watchdog.handle_restart_num,
-            'real_time_thread_name': self.watchdog.thread_real_time_names
-        }
+        if self.node == 'ziyan':
+            status = {
+                'node': self.node,
+                'data': self.data,
+                'log': self.log,
+                'check_restart_time': self.watchdog.check_restart_num,
+                'handle_restart_time': self.watchdog.handle_restart_num,
+                'real_time_thread_name': self.watchdog.thread_real_time_names
+            }
+        else:
+            status = {
+                'node': self.node,
+                'data': self.data,
+                'log': self.log,
+                'transport_restart_time': self.watchdog.transport_restart_num,
+                'real_time_thread_name': self.watchdog.thread_real_time_names
+            }
         try:
             self.redis.sadd('status', status)
             self.redis.expire('status', 60 * 5)
@@ -156,19 +171,27 @@ class Communication:
         :return:
         """
         while True:
-            status = {
-                'node': self.node,
-                'ip': self.ip,
-                'data': self.data,
-                'log': self.log,
-                'check_restart_time': self.watchdog.check_restart_num,
-                'handle_restart_time': self.watchdog.handle_restart_num,
-                'real_time_thread_name': self.watchdog.thread_real_time_names
-            }
+            if self.node == 'ziyan':
+                status = {
+                    'node': self.node,
+                    'data': self.data,
+                    'log': self.log,
+                    'check_restart_time': self.watchdog.check_restart_num,
+                    'handle_restart_time': self.watchdog.handle_restart_num,
+                    'real_time_thread_name': list(self.watchdog.thread_real_time_names)
+                }
+            else:
+                status = {
+                    'node': self.node,
+                    'data': self.data,
+                    'log': self.log,
+                    'transport_restart_time': self.watchdog.transport_restart_num,
+                    'real_time_thread_name': list(self.watchdog.thread_real_time_names)
+                }
 
             key = "/nodes/" + self.node + "/" + self.app + "/status"
             try:
-                self.etcd.write(key, status)
+                self.etcd.write(key, json.dumps(status))
                 log.debug("\nkey: %s\ndata: %s\n", key, status)
             except Exception as e:
                 log.error("\n%s", e)
@@ -188,8 +211,9 @@ class Communication:
             self.log.append(msg)
 
     def re_load(self):
-        self.node = get_conf()['node']
-        self.ip = get_conf()['local_ip']
-        self.app = get_conf()['application']
-        self.paths = get_conf()['paths']
-        self.etcd_interval_time = get_conf()['etcd']['interval']
+        conf = get_conf()
+        self.node = conf['node']
+        self.ip = conf['local_ip']
+        self.app = conf['application']
+        self.paths = conf['paths']
+        self.etcd_interval_time = conf['etcd']['interval']

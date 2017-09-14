@@ -67,7 +67,7 @@ class Status:
             data = self.__redis.smembers(self.set_name)
             if data or time.time() - start_time > timeout:
                 break
-            time.sleep(1)
+            time.sleep(0.25)
 
         return data
 

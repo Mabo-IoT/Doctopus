@@ -4,7 +4,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='Doctopus',
-    version='0.1.0',
+    version='0.2.0',
     author='',
     author_email='',
     description='A distributed data collector',
@@ -12,10 +12,10 @@ setup(
     include_package_data=True,
     license='MIT',
     install_requires=['pendulum', 'redis',
-                      'influxdb', 'msgpack-python', 'toml', 'u-msgpack-python', 'falcon'],
+                      'influxdb', 'msgpack-python', 'toml', 'python-etcd', 'falcon'],
     entry_points={
         'console_scripts': [
-            'doctopus_make=Doctopus:main'
+            'doctopus=Doctopus:main'
         ]
     }
 )

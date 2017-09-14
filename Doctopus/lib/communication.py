@@ -3,6 +3,7 @@
 import asyncio
 import logging
 import threading
+import json
 
 from Doctopus.lib.database_wrapper import RedisWrapper, EtcdWrapper
 from Doctopus.lib.watchdog import WatchDog
@@ -177,7 +178,7 @@ class Communication:
                     'log': self.log,
                     'check_restart_time': self.watchdog.check_restart_num,
                     'handle_restart_time': self.watchdog.handle_restart_num,
-                    'real_time_thread_name': self.watchdog.thread_real_time_names
+                    'real_time_thread_name': list(self.watchdog.thread_real_time_names)
                 }
             else:
                 status = {
@@ -185,12 +186,12 @@ class Communication:
                     'data': self.data,
                     'log': self.log,
                     'transport_restart_time': self.watchdog.transport_restart_num,
-                    'real_time_thread_name': self.watchdog.thread_real_time_names
+                    'real_time_thread_name': list(self.watchdog.thread_real_time_names)
                 }
 
             key = "/nodes/" + self.node + "/" + self.app + "/status"
             try:
-                self.etcd.write(key, status)
+                self.etcd.write(key, json.dumps(status))
                 log.debug("\nkey: %s\ndata: %s\n", key, status)
             except Exception as e:
                 log.error("\n%s", e)

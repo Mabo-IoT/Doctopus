@@ -54,6 +54,34 @@ optional arguments:
   -p PORT, --port PORT  TCP port on which to listen, default is '8000'.
 ```
 
+### Web API
+
+```
+$ pip install httpie
+```
+
+1. Returns the current status data, json
+
+```
+$ http 127.0.0.1:8000/status    // return json data
+
+$ http 127.0.0.1:8000/status?flush=1    // Refresh and return the latest data
+```
+
+2. Restart and Reload
+
+```
+$ http 127.0.0.1:8000/restart
+
+$ http 127.0.0.1:8000/reload
+```
+
+3. Register the configuration information to etcd
+
+```
+$ http 127.0.0.1:8000/upload
+```
+
 ### ziyan
 
 Generate project catalogs:
@@ -63,7 +91,7 @@ $ doctopus_make project_name
 
 $ cd project_name
 
-$ python manage.py
+$ python manage.py  // default listening on 0.0.0.0:8000
 ```
 
 The generated project is a test project that can run
@@ -77,5 +105,5 @@ $ doctopus_make project_name -t chitu
 
 $ cd project_name
 
-$ python manage.py -t chitu
+$ python manage.py -t chitu // default listening on 0.0.0.0:8001
 ```

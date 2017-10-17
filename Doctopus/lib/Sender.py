@@ -87,4 +87,4 @@ class Sender(object):
         :param data: 
         :return: 
         """
-        self.communication.data = data
+        self.communication.data[data["table_name"]] = data

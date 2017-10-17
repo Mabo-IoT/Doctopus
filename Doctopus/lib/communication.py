@@ -44,7 +44,7 @@ class Communication:
         self.ip = conf['local_ip']
         self.app = conf['application']
         self.paths = conf['paths']
-        self.data = None
+        self.data = dict()
         self._name = 'communication'
         self.log = list()
 
@@ -110,7 +110,7 @@ class Communication:
         Write the data to local redis
         :return: None
         """
-        if self.node == 'ziyan':
+        if self.app == 'ziyan':
             status = {
                 'node': self.node,
                 'data': self.data,
@@ -171,7 +171,7 @@ class Communication:
         :return:
         """
         while True:
-            if self.node == 'ziyan':
+            if self.app == 'ziyan':
                 status = {
                     'node': self.node,
                     'data': self.data,

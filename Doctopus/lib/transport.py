@@ -18,7 +18,6 @@ class Transport:
         self.data_original = None
         self.name = None
         self.communication = Communication(conf)
-        self.communication.data = dict()
 
         if self.to_where == 'influxdb':
             self.db = InfluxdbWrapper(conf['influxdb'])
@@ -101,7 +100,7 @@ class Transport:
         if self.to_where == 'influxdb':
             time_precision = data[0].pop('unit')
             info = self.db.send(data, time_precision)
-            self.communication.data[self.name] = data
+            self.communication.data[data[0]["measurement"]] = data
             if info:
                 log.info('send data to inflxudb.{}, {}'.format(data[0]['measurement'], info))
             else:

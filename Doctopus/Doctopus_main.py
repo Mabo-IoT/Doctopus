@@ -112,18 +112,11 @@ class Handler(object):
         fields['tags'] = processed_dict.get('tags')
         fields['unit'] = self.unit
 
-        # timestamp
-        if 'unit' in processed_dict.keys():
-            # send to influxdb must has "unit"
-            if processed_dict['unit'] == 's':
-                timestamp = processed_dict.get('timestamp') or pendulum.now().int_timestamp
-            else:
-                timestamp = processed_dict.get('timestamp') or int(pendulum.now().float_timestamp * 1000000)
-        else:
-            # send to other db "unit" is not necessary
+        # send to influxdb must has "unit"
+        if self.unit == 's':
             timestamp = processed_dict.get('timestamp') or pendulum.now().int_timestamp
-
-        # fields.update(influxdb_dict)
+        else:
+            timestamp = processed_dict.get('timestamp') or int(pendulum.now().float_timestamp * 1000000)
 
         # data to put in send
         data_dict = {

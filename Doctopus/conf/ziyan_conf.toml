@@ -11,6 +11,7 @@ paths = ['./conf/conf.toml', './lua/enque_script.lua', './plugins/your_plugin.py
     # handler config
     table_name = 'test_table'
     field_name_list = ['Msg']
+    # 's' or 'u'
     unit = 's'
 
 

@@ -4,8 +4,12 @@ from logging import getLogger
 
 import msgpack
 import pendulum
+import sys
 
-from Doctopus.lib.communication import Communication
+if sys.version_info[0] == 3 and sys.version_info[1] >= 5:
+    from Doctopus.lib.communication import Communication
+else:
+    from Doctopus.lib.communication_2 import Communication
 from Doctopus.lib.database_wrapper import RedisWrapper
 
 log = getLogger(__name__)

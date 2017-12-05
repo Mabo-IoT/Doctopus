@@ -7,12 +7,13 @@ import threading
 import time
 
 
-Lock = threading.RLock()
+
 log = logging.getLogger(__name__)
 
 
-class WatchDog:
+class WatchDog(object):
     INSTANCE = None
+    Lock = threading.RLock()
 
     def __new__(cls, *args, **kwargs):
         """
@@ -25,12 +26,12 @@ class WatchDog:
         _instance = None
         if not cls.INSTANCE:
             try:
-                Lock.acquire()
+                cls.Lock.acquire()
                 if not cls.INSTANCE:
                     _instance = object.__new__(cls)
                     cls.INSTANCE = _instance
             finally:
-                Lock.release()
+                cls.Lock.release()
         return cls.INSTANCE
 
     def __init__(self, conf):

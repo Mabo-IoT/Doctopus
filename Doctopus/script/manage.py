@@ -4,6 +4,8 @@ import argparse
 
 import waitress
 
+import sys
+
 from Doctopus.web.app import get_app
 
 try:
@@ -16,10 +18,14 @@ from threading import Thread
 
 from Doctopus.lib.Sender import Sender
 from Doctopus.lib.watchdog import WatchDog
-from Doctopus.lib.communication import Communication
 from Doctopus.lib.logging_init import setup_logging
 from Doctopus.lib.transport import Transport
 from Doctopus.utils.util import get_conf
+
+if sys.version_info[0] == 3 and sys.version_info[1] >= 5:
+    from Doctopus.lib.communication import Communication
+else:
+    from Doctopus.lib.communication_2 import Communication
 
 log = getLogger("Doctopus.start")
 
@@ -111,7 +117,7 @@ if __name__ == '__main__':
                                     usage="\n"
                                           "python manage.py [-h] [-a ACTION] [-v] [-t {ziyan,chitu}] [-i IP] [-p PORT]")
     parse.add_argument('-a', '--action', action='store', default='run', help='Run/test the project, default run')
-    parse.add_argument('-v', '--version', action='version', default=None, version='%(prog)s 0.2.0')
+    parse.add_argument('-v', '--version', action='version', default=None, version='%(prog)s 0.3.0')
     parse.add_argument('-t', '--target', default='ziyan', choices=['ziyan', 'chitu'],
                        help='selelct the target, default ziyan')
     parse.add_argument('-i', '--ip', default='0.0.0.0',

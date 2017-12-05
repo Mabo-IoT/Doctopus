@@ -42,7 +42,7 @@ class RedisWrapper:
             try:
                 self.__db.ping()
                 return True
-            except (ConnectionError, Exception) as e:
+            except Exception as e:
                 log.error('\n%s', e)
                 time.sleep(2)
                 continue

@@ -3,7 +3,7 @@ A distributed data collector. The [ziyan](https://github.com/maboss-YCMan/ziyan)
 
 ## Support
 
-Python3.5+
+Python3/Python2.7+
 
 ## Dependence
 

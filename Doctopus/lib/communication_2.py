@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 
-import asyncio
 import logging
 import threading
 import json
+import gevent
 
 from Doctopus.lib.database_wrapper import RedisWrapper, EtcdWrapper
 from Doctopus.lib.watchdog import WatchDog
@@ -61,13 +61,12 @@ class Communication(object):
         :param args:
         :return:
         """
-        loop = asyncio.SelectorEventLoop()
-        asyncio.set_event_loop(loop)
-        loop.call_soon_threadsafe(loop.create_task, self.handle())
-        loop.call_soon_threadsafe(loop.create_task, self.write_into_remote())
-        loop.run_forever()
+        gevent.joinall([
+            gevent.spawn(self.handle),
+            gevent.spawn(self.write_into_remote)
+        ])
 
-    async def handle(self):
+    def handle(self):
         """
         异步方法，监听 redis 给出的命令
         :return:
@@ -92,7 +91,7 @@ class Communication(object):
 
                 for path in self.paths:
                     self.upload(path)
-            await asyncio.sleep(0.5)
+            gevent.sleep(0.5)
 
     def check_order(self):
         """
@@ -136,8 +135,8 @@ class Communication(object):
     def upload(self, path):
         """
         upload specific path file
-        :param path: 
-        :return: 
+        :param path:
+        :return:
         """
         key = "/nodes/" + self.node + "/" + self.app
         if 'toml' in path:
@@ -165,7 +164,7 @@ class Communication(object):
         except Exception as e:
             log.error("\n%s", e)
 
-    async def write_into_remote(self):
+    def write_into_remote(self):
         """
         异步方法，每10分钟向服务器 etcd 中注册当前状态
         :return:
@@ -196,7 +195,7 @@ class Communication(object):
             except Exception as e:
                 log.error("\n%s", e)
 
-            await asyncio.sleep(self.etcd_interval_time)
+            gevent.sleep(self.etcd_interval_time)
 
     def enqueue_log(self, msg):
         """

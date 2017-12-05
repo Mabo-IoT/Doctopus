@@ -3,8 +3,13 @@
 import logging
 import logging.handlers
 import os
+import sys
 
-from Doctopus.lib.communication import Communication
+if sys.version_info[0] == 3 and sys.version_info[1] >= 5:
+    from Doctopus.lib.communication import Communication
+else:
+    from Doctopus.lib.communication_2 import Communication
+
 from Doctopus.utils.util import get_conf
 
 

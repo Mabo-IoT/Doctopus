@@ -16,7 +16,7 @@ paths = ['./conf/conf.toml', './lua/enque_script.lua', './plugins/your_plugin.py
 
 
 [sender]
-    lua_path = 'lua\enque_script.lua'
+    lua_path = 'lua/enque_script.lua'
     enque_log = true
 
 

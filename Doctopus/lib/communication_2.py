@@ -4,6 +4,9 @@ import logging
 import threading
 import json
 import gevent
+import os
+import hashlib
+import platform
 
 from Doctopus.lib.database_wrapper import RedisWrapper, EtcdWrapper
 from Doctopus.lib.watchdog import WatchDog
@@ -47,6 +50,7 @@ class Communication(object):
         self.data = dict()
         self._name = 'communication'
         self.log = list()
+        self.hash = None
 
         # 重启刷新缓存
         self.flush_data()
@@ -61,10 +65,17 @@ class Communication(object):
         :param args:
         :return:
         """
-        gevent.joinall([
-            gevent.spawn(self.handle),
-            gevent.spawn(self.write_into_remote)
-        ])
+        if platform.system() == "Windows":
+            gevent.joinall([
+                gevent.spawn(self.handle),
+                gevent.spawn(self.write_into_remote),
+                gevent.spawn(self.monitor)
+            ])
+        else:
+            gevent.joinall([
+                gevent.spawn(self.handle),
+                gevent.spawn(self.write_into_remote)
+            ])
 
     def handle(self):
         """
@@ -216,3 +227,16 @@ class Communication(object):
         self.app = conf['application']
         self.paths = conf['paths']
         self.etcd_interval_time = conf['etcd']['interval']
+
+    def monitor(self):
+        while True:
+            data = ""
+            for file in self.paths:
+                data += str(os.stat(file).st_mtime)
+            sha = hashlib.sha1(data.encode()).hexdigest()
+            if not self.hash:
+                self.hash = sha
+            elif self.hash != sha:
+                self.hash = sha
+                self.redis.rpush("order_name", "reload")
+            gevent.sleep(30)

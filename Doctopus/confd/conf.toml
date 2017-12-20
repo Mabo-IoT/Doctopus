@@ -19,7 +19,7 @@ nodes = [
 noop = false
 
 # Enable watch support
-watch = false
+watch = true
 
 # The string to prefix to keys.
 prefix = ""

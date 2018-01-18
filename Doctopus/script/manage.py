@@ -31,10 +31,10 @@ log = getLogger("Doctopus.start")
 
 
 def start_ziyan():
-    from plugins.your_plugin import MyCheck, MyHandler
+    from plugins.your_plugin import MyCommand, MyCheck, MyHandler
 
     # init queues
-    queue = {'data_queue': Queue(), 'sender': Queue()}
+    queue = {'command_queue': Queue(), 'data_queue': Queue(), 'sender': Queue()}
 
     # load all configs
     all_conf = get_conf('conf/conf.toml')
@@ -43,18 +43,20 @@ def start_ziyan():
     setup_logging(all_conf['log_configuration'])
 
     # init instances
+    commander = MyCommand(all_conf)
     checker = MyCheck(all_conf)
     handler = MyHandler(all_conf)
     sender = Sender(all_conf)
     communication = Communication(all_conf)
 
     # name instances
+    commander.name = 'commander'
     checker.name = 'checker'
     handler.name = 'handler'
     sender.name = 'sender'
 
     # init work threads set
-    workers = [checker, handler]
+    workers = [commander, checker, handler]
 
     thread_set = dict()
 

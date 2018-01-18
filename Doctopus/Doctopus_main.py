@@ -2,12 +2,50 @@
 
 import logging
 import types
+import time
 from abc import ABCMeta, abstractmethod
 from Doctopus.utils.util import get_conf
 
 import pendulum
 
 log = logging.getLogger("Doctopus.main")
+
+
+class Command(object):
+    __metaclass__ = ABCMeta
+
+    def __init__(self, configuration):
+        self.conf = configuration
+
+        # 类相关属性
+        self.query_rate = self.conf['query_rate']
+        pass
+
+    def work(self, queues, **kwargs):
+        # get command queue
+        self.command_queue = command_queue = queues['command_queue']
+
+        while True:
+            # 使用用户逻辑创造command
+            cmd = self.user_create_command()
+
+            if cmd:
+                command_queue.put(cmd)
+            else:
+                log.error('\nNo command send')
+
+            # kwargs['record'].thread_signal[kwargs['name']] = time.time()
+
+            # 查询频次，以秒为单位
+            time.sleep(self.query_rate)
+
+    @abstractmethod
+    def user_create_command(self):
+        """
+        base function
+        :return:
+        """
+        pass
 
 
 class Check(object):
@@ -25,25 +63,30 @@ class Check(object):
         :return: 
         """
         self.data_queue = data_queue = queues['data_queue']
+        self.command_queue = command_queue = queues['command_queue']
 
         while True:
-            raw_datas = self.user_check()
+            cmd = command_queue.get()
 
-            if isinstance(raw_datas, types.GeneratorType):
-                for raw_data in raw_datas:
-                    # put data in queue so handler can take
-                    data_queue.put(raw_data)
+            if cmd:
+                raw_datas = self.user_check(cmd)
 
+                if isinstance(raw_datas, types.GeneratorType):
+                    for raw_data in raw_datas:
+                        # 将查询到的数据传至handler
+                        data_queue.put(raw_data)
+                else:
+                    # 将查询到的数据传至handler
+                    data_queue.put(raw_datas)
             else:
-                # return data in queue so handler can take
-                data_queue.put(raw_datas)
+                log.error('\nNo command received')
 
     def re_load(self):
         self.conf = get_conf("conf/conf.toml")
         return self
 
     @abstractmethod
-    def user_check(self):
+    def user_check(self, command):
         """
         user-defined plugin to collect data
         :param self:

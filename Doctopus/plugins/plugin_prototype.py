@@ -2,25 +2,39 @@
 import time
 from logging import getLogger
 
-from Doctopus.Doctopus_main import Check, Handler
+from Doctopus.Doctopus_main import Command, Check, Handler
 
 log = getLogger('Doctopus.plugins')
+
+
+class MyCommand(Command):
+    def __init__(self, configuration):
+        super(MyCommand, self).__init__(configuration=configuration)
+
+    def user_create_command(self):
+        """
+        put your command here to activate the request data logic.
+
+        :return: cmd, this variable will be send to user_check as a command parameter.
+        """
+        cmd = 1
+        return cmd
 
 
 class MyCheck(Check):
     def __init__(self, configuration):
         super(MyCheck, self).__init__(configuration=configuration)
 
-    def user_check(self):
+    def user_check(self, command):
         """
 
         :param command: user defined parameter.
         :return: the data you requested.
         """
-        data = 'check的data'
-        log.debug('%s', data)
-        time.sleep(2)
-        yield data
+        if command == 1:
+            data = 'check的data'
+            log.debug('%s', data)
+            yield data
 
 
 class MyHandler(Handler):

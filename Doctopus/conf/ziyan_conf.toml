@@ -2,13 +2,18 @@ node = 'test'
 local_ip = "10.0.0.1"
 application = "ziyan"
 paths = ['./conf/conf.toml', './lua/enque_script.lua', './plugins/your_plugin.py']
+query_rate = 1
+
 
 [user_conf]
+    [user_conf.commander]
+
+
     [user_conf.check]
-    # check config
+    # check configuration
 
     [user_conf.handler]
-    # handler config
+    # handler configuration
     table_name = 'test_table'
     field_name_list = ['Msg']
     # 's' or 'u'

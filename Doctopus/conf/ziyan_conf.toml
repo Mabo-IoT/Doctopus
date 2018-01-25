@@ -6,7 +6,7 @@ query_rate = 1
 
 
 [user_conf]
-    [user_conf.commander]
+    [user_conf.command]
 
 
     [user_conf.check]
@@ -14,10 +14,12 @@ query_rate = 1
 
     [user_conf.handler]
     # handler configuration
-    table_name = 'test_table'
+    measurement = 'test_measurement'
     field_name_list = ['Msg']
     # 's' or 'u'
     unit = 's'
+    [user_conf.handler.tag]
+
 
 
 [sender]

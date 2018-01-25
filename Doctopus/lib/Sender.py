@@ -31,7 +31,7 @@ class Sender(object):
 
         # log format
         self.enque_log_flag = self.conf['enque_log']
-        self.log_format = '\ntable_name: {}\nfields: {}\ntimestamp: {}\n'
+        self.log_format = '\nmeasurement:{}\nunit:{}\ntimestamp:{}\ntags:{}\nfields:{}\n'
 
         # init communication class (singleinstance)
         self.communication = Communication(configuration)
@@ -58,9 +58,11 @@ class Sender(object):
         :param data: 
         :return: 
         """
-        table_name = data['table_name']
+        measurement = data['measurement']
         fields = data['fields']
         timestamp = data['timestamp']
+        unit = data['unit']
+        tags = data['tags']
 
         if 'unit' in fields.keys():
             if fields['unit'] == 's':
@@ -70,17 +72,22 @@ class Sender(object):
         else:
             date_time = pendulum.from_timestamp(timestamp, tz='Asia/Shanghai').to_datetime_string()
 
-        log_str = self.log_format.format(table_name, fields, date_time)
+        log_str = self.log_format.format(measurement, unit, date_time, tags, fields,)
         # show log or not
         if self.enque_log_flag:
             log.info(log_str)
+
         # pack data by msgpack ready to send to redis
-        table_name = msgpack.packb(table_name)
+        measurement = msgpack.packb(measurement)
         fields = msgpack.packb(fields)
         timestamp = msgpack.packb(timestamp)
+        tags = msgpack.packb(tags)
+        unit = msgpack.packb(unit)
+
         # send data to redis
         try:
-            lua_info = self.db.enqueue(table_name=table_name, fields=fields, timestamp=timestamp)
+            lua_info = self.db.enqueue(timestamp=timestamp, tags=tags,
+                                       fields=fields, measurement=measurement, unit=unit)
             log.info('\n' + lua_info.decode())
         except Exception as e:
             log.error("\n%s", e)
@@ -91,4 +98,4 @@ class Sender(object):
         :param data: 
         :return: 
         """
-        self.communication.data[data["table_name"]] = data
+        self.communication.data[data["measurement"]] = data

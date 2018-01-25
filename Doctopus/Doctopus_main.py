@@ -99,10 +99,13 @@ class Handler(object):
     __metaclass__ = ABCMeta
 
     def __init__(self, configuration):
-        self.conf = configuration['user_conf']['handler']
-        self.field_name_list = self.conf.get('field_name_list', [])
-        self.table_name = self.conf.get('table_name', 'influxdb')
+        self.conf = configuration
+        self.make_processed_dict()
+        self.field_name_list = self.conf.get('field_name_list', None)
         self.unit = self.conf.get('unit', 's')
+        self.data_dict['unit'] = self.unit
+
+        pass
 
     def work(self, queues, **kwargs):
         self.data_queue = data_queue = queues['data_queue']
@@ -124,16 +127,26 @@ class Handler(object):
         :param processed_dicts: 
         :return: 
         """
-        data = None
+
         if isinstance(processed_dicts, (types.GeneratorType, list)):
             for processed_dict in processed_dicts:
-                data = self.process_dict(processed_dict)
+                update_data = self.process_dict(processed_dict)
+                # 复制初始数据字典
+                data = dict(self.data_dict)
 
+                # 数据更新
+                data.update(update_data)
+                self.sender_pipe.put(data)
         elif isinstance(processed_dicts, dict):
 
-            data = self.process_dict(processed_dicts)
+            update_data = self.process_dict(processed_dicts)
 
-        self.sender_pipe.put(data)
+            # 复制初始数据字典
+            data = dict(self.data_dict)
+            # 数据更新
+            data.update(update_data)
+
+            self.sender_pipe.put(data)
 
     def process_dict(self, processed_dict):
         """
@@ -141,7 +154,6 @@ class Handler(object):
         :param processed_dict: 
         :return: 
         """
-        table_name = processed_dict.get('table_name') or self.table_name
 
         # make fields
         value_list = processed_dict.get('data_value')
@@ -152,8 +164,12 @@ class Handler(object):
         else:
             fields = value_list
 
-        fields['tags'] = processed_dict.get('tags')
-        fields['unit'] = self.unit
+        # user tags
+        tags = processed_dict.get('tags', None)
+
+        # user measurement
+        measurement = processed_dict.get('measurement', None)
+
 
         # send to influxdb must has "unit"
         if self.unit == 's':
@@ -161,19 +177,21 @@ class Handler(object):
         else:
             timestamp = processed_dict.get('timestamp') or int(pendulum.now().float_timestamp * 1000000)
 
-        # data to put in send
-        data_dict = {
-            "table_name": table_name,
-            "fields": fields,
-            "timestamp": timestamp
-        }
 
-        return data_dict
+        update_dict = {'fields': fields, 'timestamp': timestamp}
+
+        # 补充用户自定义tag，measurement.
+        if tags:
+            update_dict['tags'] = tags
+        if measurement:
+            update_dict['measurement'] = measurement
+
+        return update_dict
 
     def re_load(self):
         self.conf = get_conf("conf/conf.toml")['user_conf']['handler']
         self.field_name_list = self.conf.get('field_name_list', [])
-        self.table_name = self.conf.get('table_name', 'influxdb')
+        self.table_name = self.conf.get('measurement', None)
         self.unit = self.conf.get('unit', 's')
         return self
 
@@ -189,3 +207,15 @@ class Handler(object):
         :return: 
         """
         pass
+
+    def make_processed_dict(self, ):
+        """
+        在handler类初始化阶段，从配置文件中提取tag，measurement信息，
+        注册在类信息中。
+        :return: None 
+        """
+        tags = self.conf['user_conf']['handler']['tag']
+        measurement = self.conf['user_conf']['handler']['measurement']
+        self.data_dict = {'fields': None,
+                          'tags': tags, 'measurement': measurement}
+

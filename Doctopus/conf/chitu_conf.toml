@@ -15,11 +15,11 @@ send_to_where = 'influxdb'
     db = 1
 
 [influxdb]
-    host = "10.203.96.26"
+    host = ""
     port = 8086
-    username ="eimuserw"
-    password = "max2016s0luto9"
-    db = "patac_eim"
+    username =""
+    password = ""
+    db = ""
 
 [etcd]
     host = 'localhost'

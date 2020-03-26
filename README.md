@@ -1,6 +1,8 @@
 ## Doctopus
 A distributed data collector. The [ziyan](https://github.com/maboss-YCMan/ziyan) and [chitu](https://github.com/maboss-YCMan/chitu) upgrade version.
 
+New branch 'json_format'
+
 ## Support
 
 Python3/Python2.7+

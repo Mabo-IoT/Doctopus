@@ -41,12 +41,6 @@ def make_ziyan(name):
     |
       -- conf\
     |
-      -- confd\
-       |
-         -- conf.d\
-       |
-         -- templates\
-    |
       -- lua\
     |
       -- plugins\
@@ -67,9 +61,6 @@ def make_ziyan(name):
             # copy conf files
             for file in glob.glob(filepath + '/conf/ziyan_conf.toml'):
                 shutil.copyfile(file, name + '/conf/conf.toml')
-
-            # copy confd dirs and files
-            shutil.copytree(filepath + '/confd/', name + '/confd/')
 
             # copy lua files
             for file in glob.glob(filepath + '/conf/*.lua'):
@@ -94,12 +85,6 @@ def make_chitu(name):
         |
           -- conf\
         |
-          -- confd\
-           |
-             -- conf.d\
-           |
-             -- templates\
-        |
           -- manage.py
         |
           -- confd.exe(confd)
@@ -114,9 +99,6 @@ def make_chitu(name):
             # copy conf files
             for file in glob.glob(filepath + '/conf/chitu_conf.toml'):
                 shutil.copyfile(file, name + '/conf/conf.toml')
-
-            # copy confd dirs and files
-            shutil.copytree(filepath + '/confd/', name + '/confd/')
 
             shutil.copyfile(filepath + '/script/manage.py', name + '/manage.py')
     except Exception as e:

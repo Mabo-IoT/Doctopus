@@ -18,7 +18,8 @@ local time_range = 10
 local table_name = KEYS[1]
 local fields = ARGV[1]
 local timestamp = ARGV[2]
-local MAXLEN = 100000
+local MAXLEN = 10
+
 
 -- FUNCTION PART----------------------------------------------------------------------
 local function set_threshold(threshold_name, timestamp)
@@ -96,9 +97,7 @@ if f_flag == true then
     return 'field enque worked~'
 
 elseif t_flag == true then
-
     local data = {
-        heartbeat = cmsgpack.pack(true),
         table_name = table_name,
         time = timestamp,
         fields = fields,

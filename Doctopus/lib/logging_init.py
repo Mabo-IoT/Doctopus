@@ -36,7 +36,7 @@ def setup_logging(conf):
     log = logging.getLogger('Doctopus')
     log.setLevel(logging.DEBUG)
 
-    formatter = logging.Formatter(format_string, datefmt='%Y-%d-%m %H:%M:%S')
+    formatter = logging.Formatter(format_string, datefmt='%Y-%m-%d %H:%M:%S')
 
     if file:
         # 如果 log 文本不存在，创建文本

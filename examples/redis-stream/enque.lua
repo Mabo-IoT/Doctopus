@@ -1,7 +1,3 @@
--- Creator: Marshall Fate
--- editor: driftluo
--- CreateTime: 2016/11/26 16:56
--- EditTime: 2017/06/07
 
 --this lua script is used for redis enque action with two conditions:
 --1. fields is diffrent with former fields which refers to old_fields in key threshold of redis
@@ -18,7 +14,7 @@ local time_range = 10
 local table_name = KEYS[1]
 local fields = ARGV[1]
 local timestamp = ARGV[2]
-local MAXLEN = 100000
+local MAXLEN = 700000
 
 -- FUNCTION PART----------------------------------------------------------------------
 local function set_threshold(threshold_name, timestamp)
@@ -73,10 +69,10 @@ if cmsgpack.unpack(fields)['unit'] == 'u' then
     time_range = time_range * 1000000
 end
 
---Save the amount of data for 2 days based on a data of 5 seconds
-if redis.call("llen", "data_queue") > 2 * 24 * 60 * 60 / 5 then
-    redis.call("lpop", "data_queue")
-end
+-- --Save the amount of data for 2 days based on a data of 5 seconds
+-- if redis.call("llen", "data_queue") > 2 * 24 * 60 * 60 / 5 then
+--     redis.call("lpop", "data_queue")
+-- end
 
 --set threshold according to time_range, fields['eqpt_no'], table_name
 f_flag, t_flag = threshold(fields, cmsgpack.unpack(timestamp), time_range)
@@ -91,21 +87,21 @@ if f_flag == true then
     }
 
     local msg = cmsgpack.pack(data)
+    redis.call("XADD", "data_stream", "*", "MAXLEN", MAXLEN, "data", msg)
     -- redis.call("RPUSH", "data_queue", msg) -- msg queue
-    redis.call("XADD", "data_stream", "MAXLEN", MAXLEN, "*", "data", msg)
     return 'field enque worked~'
 
 elseif t_flag == true then
 
     local data = {
-        heartbeat = cmsgpack.pack(true),
+        heartbeat = true,
         table_name = table_name,
         time = timestamp,
         fields = fields,
     }
     local msg = cmsgpack.pack(data)
-    -- redis.call("RPUSH", "data_queue", msg) -- msg queue
     redis.call("XADD", "data_stream", "*", "MAXLEN", MAXLEN, "data", msg)
+    -- redis.call("RPUSH", "data_queue", msg) -- msg queue
     return 'heart beat enque worked~'
 else
     return 'ignoring schema worked!'

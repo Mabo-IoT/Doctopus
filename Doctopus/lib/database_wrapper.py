@@ -3,12 +3,14 @@ import logging
 import time
 
 import redis
+from redis import exceptions 
 import requests
 from influxdb import InfluxDBClient
 from etcd import Client
 
 log = logging.getLogger(__name__)
 
+MAXLEN = 100000
 
 class RedisWrapper:
     """
@@ -32,6 +34,7 @@ class RedisWrapper:
 
         # 测试redis连通性
         self.test_connect()
+        
 
     def test_connect(self):
         """
@@ -57,6 +60,86 @@ class RedisWrapper:
         with open(lua_script_file, 'r') as fn:
             script = fn.read()
             self.sha = self.__db.script_load(script)
+    
+    def addGroup(self, group_name):
+        """
+        add group for data stream
+        args: 
+            group_name: string  ;group name
+        """
+        try:
+            # if not exists data_stream, make a data_stream
+            result = self.__db.xgroup_create("data_stream", group_name, mkstream=True)
+            self.__db.xtrim("data_stream", MAXLEN)
+                
+        except exceptions.ResponseError as e:
+            # 1. exist group , no need panic
+            if "already exists" in str(e):
+                log.info("Already exists group {} for data stream".format(group_name))
+        except Exception as e:
+            log.error(e)
+            raise e 
+    
+    def readGroup(self, group_name, consumer):
+        """
+        Read data_stream by group
+        args: 
+            group_name: string  ;group name
+            consumer: string ;consumer name
+        return: 
+            result:List[List[byte, List[set(byte, dict{byte:byte})]]]
+            [[b'data_stream', [(b'1571295570085-0', {b'MAXLEN': b'700000', b'data': b'\x8a6...'})..only 1]]]
+        """
+        streams = {
+            "data_stream": ">",
+        }
+        result = self.__db.xreadgroup(group_name, consumer, streams, count=1, block=1000)
+        
+        return result
+
+    def readPending(self, group_name, consumer, id):
+        """
+        Read pending data_stream
+        args:
+            group_name: string ;group name
+            consumer: string ;consumer name
+            id: string ; pending data id
+        return:
+            result: [[b'data_stream',[(b'id', {b'MEXLEN': b'70000', b'data': b''})....10 ]]]
+                    List[List[byte, List[set(byte, dict{byte:byte})]]]
+        """
+        streams = {
+            "data_stream": id,
+        }
+
+        result = self.__db.xreadgroup(group_name, consumer, streams, count=10, block=1000)
+        return result
+    
+    def xPending(self, group_name):
+        """
+        Return the pending messages ID info
+        args:  
+            group_name: string  ;group name
+        return: 
+            result: {'pending': 3263, 
+                'min': b'1571038514316-0', 
+                'max': b'1571041788324-0', 
+                'consumers': [
+                    {'name': b'chitu', 'pending': 50}, 
+                    {'name': b'kafka', 'pending': 3213}]
+            }
+        """
+        result = self.__db.xpending("data_stream", group_name)
+        return result
+    
+    def ack(self, group_name, *ids):
+        """
+        ACK ids
+        args: 
+            group_name: string ;group name
+            *ids: data id
+        """
+        self.__db.xack("data_stream", group_name, *ids)
 
     def enqueue(self, **kwargs):
         """
@@ -74,8 +157,10 @@ class RedisWrapper:
         """
         Remove and return the first item of the list ``data_queue``
         if ``data_queue`` is an empty list, block indefinitely
+        update: return last item of the list to fetch newest data from device when network recovery
         """
-        return self.__db.lpop(key)
+        return self.__db.rpop(key)
+        # return self.__db.lpop(key)
 
     def get_len(self, key):
         """

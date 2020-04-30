@@ -13,7 +13,7 @@ send_to_where = 'kafka' # influxdb, kafka
     # which port is your redis server host?
     port = 6379
     # which db your data reside in ?
-    db = 1
+    db = 2
 # the status and order store position
 [redis]
     # local ip or remote ip ?
@@ -21,7 +21,7 @@ send_to_where = 'kafka' # influxdb, kafka
     # which port is your redis server host?
     port = 6379
     # which db your data reside in ?
-    db = 1
+    db = 2
 
 [kafka]
     bootstrap_servers = "127.0.0.1:9092"
@@ -32,7 +32,7 @@ send_to_where = 'kafka' # influxdb, kafka
 
 
 [influxdb]
-    host = "10.0.0.0"
+    host = "10.7.0.115"
     port = 8086
     username =""
     password = ""

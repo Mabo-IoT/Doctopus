@@ -40,13 +40,8 @@ class Communication(object):
 
     def __init__(self, conf):
         self.redis = RedisWrapper(conf['redis'])
-        self.etcd = EtcdWrapper(conf['etcd'])
-        self.etcd_interval_time = conf['etcd']['interval']
         self.watchdog = WatchDog(conf)
-        self.node = conf['node']
-        self.ip = conf['local_ip']
         self.app = conf['application']
-        self.paths = conf['paths']
         self.data = dict()
         self._name = 'communication'
         self.log = list()
@@ -68,7 +63,6 @@ class Communication(object):
         loop = asyncio.SelectorEventLoop()
         asyncio.set_event_loop(loop)
         loop.call_soon_threadsafe(loop.create_task, self.handle())
-        loop.call_soon_threadsafe(loop.create_task, self.write_into_remote())
         if platform.system() == "Windows":
             loop.call_soon_threadsafe(loop.create_task, self.monitor())
         loop.run_forever()
@@ -94,10 +88,6 @@ class Communication(object):
                 self.flush_data()
                 self.re_load()
 
-            elif command == b'upload':
-
-                for path in self.paths:
-                    self.upload(path)
             await asyncio.sleep(0.5)
 
     def check_order(self):
@@ -118,7 +108,6 @@ class Communication(object):
         """
         if self.app == 'ziyan':
             status = {
-                'node': self.node,
                 'data': self.data,
                 'log': self.log,
                 'check_restart_time': self.watchdog.check_restart_num,
@@ -127,7 +116,6 @@ class Communication(object):
             }
         else:
             status = {
-                'node': self.node,
                 'data': self.data,
                 'log': self.log,
                 'transport_restart_time': self.watchdog.transport_restart_num,
@@ -136,27 +124,6 @@ class Communication(object):
         try:
             self.redis.sadd('status', status)
             self.redis.expire('status', 60 * 5)
-        except Exception as e:
-            log.error("\n%s", e)
-
-    def upload(self, path):
-        """
-        upload specific path file
-        :param path: 
-        :return: 
-        """
-        key = "/nodes/" + self.node + "/" + self.app
-        if 'toml' in path:
-            key += '/conf'
-        elif 'py' in path:
-            key += '/code'
-        elif 'lua' in path:
-            key += '/lua'
-
-        try:
-            with open(path, 'rb') as f:
-                self.etcd.write(key, f.read())
-
         except Exception as e:
             log.error("\n%s", e)
 
@@ -170,39 +137,6 @@ class Communication(object):
                 self.redis.delete("status")
         except Exception as e:
             log.error("\n%s", e)
-
-    async def write_into_remote(self):
-        """
-        异步方法，每10分钟向服务器 etcd 中注册当前状态
-        :return:
-        """
-        while True:
-            if self.app == 'ziyan':
-                status = {
-                    'node': self.node,
-                    'data': self.data,
-                    'log': self.log,
-                    'check_restart_time': self.watchdog.check_restart_num,
-                    'handle_restart_time': self.watchdog.handle_restart_num,
-                    'real_time_thread_name': list(self.watchdog.thread_real_time_names)
-                }
-            else:
-                status = {
-                    'node': self.node,
-                    'data': self.data,
-                    'log': self.log,
-                    'transport_restart_time': self.watchdog.transport_restart_num,
-                    'real_time_thread_name': list(self.watchdog.thread_real_time_names)
-                }
-
-            key = "/nodes/" + self.node + "/" + self.app + "/status"
-            try:
-                self.etcd.write(key, json.dumps(status))
-                log.debug("\nkey: %s\ndata: %s\n", key, status)
-            except Exception as e:
-                log.error("\n%s", e)
-
-            await asyncio.sleep(self.etcd_interval_time)
 
     def enqueue_log(self, msg):
         """
@@ -218,11 +152,7 @@ class Communication(object):
 
     def re_load(self):
         conf = get_conf()
-        self.node = conf['node']
-        self.ip = conf['local_ip']
         self.app = conf['application']
-        self.paths = conf['paths']
-        self.etcd_interval_time = conf['etcd']['interval']
 
     async def monitor(self):
         while True:

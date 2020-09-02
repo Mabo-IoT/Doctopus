@@ -6,7 +6,7 @@ import redis
 from redis import exceptions 
 import requests
 from influxdb import InfluxDBClient
-from etcd import Client
+# from etcd import Client
 
 log = logging.getLogger(__name__)
 

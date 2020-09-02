@@ -97,13 +97,18 @@ class KafkaWrapper:
             msg["dataid"] =  self.conf["dataid"]
             msg["dims"] = dims
             msg["vals"] = fields
+
             # time
             if unit == 's': 
                 msg["ts"] =  timestamp
             elif unit == 'm':
-                msg["ts"] = timestamp // 1000
+                msg["ts"] = timestamp / 1000
             elif unit == 'u':
-                msg["ts"] = timestamp // 1000000
+                msg["ts"] = timestamp / 1000000
+
+            msg["vals"]["time"] = msg["ts"]
+            # fields["time"] = msg["ts"] #add by wmm 2020/7/7
+            # msg["vals"].update(fields) #add by wmm 2020/7/7
         
         except Exception as e:
             raise e

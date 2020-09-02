@@ -127,7 +127,7 @@ if __name__ == '__main__':
                                     usage="\n"
                                           "python manage.py [-h] [-a ACTION] [-v] [-t {ziyan,chitu}] [-i IP] [-p PORT]")
     parse.add_argument('-a', '--action', action='store', default='run', help='Run/test the project, default run')
-    parse.add_argument('-v', '--version', action='version', default=None, version='%(prog)s 0.3.0')
+    parse.add_argument('-v', '--version', action='version', default=None, version='%(prog)s 0.4.6')
     parse.add_argument('-t', '--target', default='ziyan', choices=['ziyan', 'chitu'],
                        help='selelct the target, default ziyan')
     parse.add_argument('-i', '--ip', default='0.0.0.0',

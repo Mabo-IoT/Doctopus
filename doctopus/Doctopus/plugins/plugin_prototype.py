@@ -18,7 +18,11 @@ class MyCheck(Check):
         :param command: user defined parameter.
         :return: the data you requested.
         """
-        data = [random.randint(0,1), round(random.uniform(21.0,30.0),2), "this is a msg"]
+        data = [
+            random.randint(0, 1),
+            round(random.uniform(21.0, 30.0), 2),
+            "this is a msg"
+        ]
         log.debug('%s', data)
         time.sleep(2)
         yield data
@@ -58,7 +62,6 @@ class MyHandler(Handler):
         # 数据经过处理之后生成 value_list
         log.debug('%s', raw_data)
         data_value_list = raw_data
-
 
         # user 可以在handle里自己按数据格式制定tags
         user_postprocessed = {'data_value': data_value_list}

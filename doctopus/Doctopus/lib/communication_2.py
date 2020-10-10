@@ -2,13 +2,12 @@
 
 import logging
 import threading
-import json
 import gevent
 import os
 import hashlib
 import platform
 
-from Doctopus.lib.database_wrapper import RedisWrapper, EtcdWrapper
+from Doctopus.lib.database_wrapper import RedisWrapper
 from Doctopus.lib.watchdog import WatchDog
 from Doctopus.utils.util import get_conf
 

@@ -1,8 +1,6 @@
 import unittest
 import time
 import random
-import kafka
-import time
 
 from Doctopus.lib.kafka_wrapper import KafkaWrapper
 
@@ -16,7 +14,6 @@ class TestKafka(unittest.TestCase):
             "org": 3101,
         }
         self.client = KafkaWrapper(conf)
-
 
     def testSendMessage(self):
         for i in range(10):
@@ -51,7 +48,7 @@ class TestKafka(unittest.TestCase):
         org: int = 3101
         msg: dict = {
             "ts": timestamp,
-            "ip": "192.168.1.21",
+            "ip": ip,
             "dataid": dataid,
             "org": org,
             "dims": {

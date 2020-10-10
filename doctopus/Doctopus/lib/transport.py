@@ -59,7 +59,9 @@ class Transport:
             except exceptions.ResponseError as e:
                 # NOGROUP for data_stream, recreate it.
                 if "NOGROUP" in str(e):
-                    log.error(str(e) + " Recreate group".format(self.group))
+                    log.error(
+                        str(e) + " Recreate group '{}'".format(self.group)
+                    )
                     self.redis.addGroup(self.group)
                 raw_data = None
             except Exception as e:

@@ -1,11 +1,8 @@
 # -*- coding: utf-8 -*-
 import logging
-import time
 
 import json
-import requests
 from kafka import KafkaProducer
-from kafka import errors as Errors
 
 log = logging.getLogger(__name__)
 
@@ -24,9 +21,14 @@ class KafkaWrapper:
     def __init__(self, conf):
         self.conf: dict = conf
         self.topic: str = conf.get("topic", "default")
-        self.bootstrap_servers: str = conf.get("bootstrap_servers", "localhost:9092")
+        self.bootstrap_servers: str = conf.get(
+            "bootstrap_servers", "localhost:9092"
+        )
         try:
-            self.producer = KafkaProducer(bootstrap_servers=self.bootstrap_servers, value_serializer=lambda v: json.dumps(v).encode('utf-8'))
+            self.producer = KafkaProducer(
+                bootstrap_servers=self.bootstrap_servers,
+                value_serializer=lambda v: json.dumps(v).encode('utf-8')
+            )
         except Exception as e:
             raise e
 
@@ -92,15 +94,15 @@ class KafkaWrapper:
             dims["data_name"] = measurement
             dims.update(tags)
             # construct msg
-            msg["ip"]  = self.conf["ip"]
+            msg["ip"] = self.conf["ip"]
             msg["org"] = self.conf["org"]
-            msg["dataid"] =  self.conf["dataid"]
+            msg["dataid"] = self.conf["dataid"]
             msg["dims"] = dims
             msg["vals"] = fields
 
             # time
             if unit == 's':
-                msg["ts"] =  timestamp
+                msg["ts"] = timestamp
             elif unit == 'm':
                 msg["ts"] = timestamp / 1000
             elif unit == 'u':
@@ -114,6 +116,3 @@ class KafkaWrapper:
             raise e
 
         return msg
-
-
-

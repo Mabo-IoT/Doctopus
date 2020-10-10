@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 import falcon
 
-from Doctopus.web.data import Status, Reload, Restart, Upload, SeverStatus, NodeStatus
+from Doctopus.web.data import Status, Reload, Restart, Upload
+from Doctopus.web.data import SeverStatus, NodeStatus
 
 from Doctopus.utils.util import get_conf
 

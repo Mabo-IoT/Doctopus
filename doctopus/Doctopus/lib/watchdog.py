@@ -7,7 +7,6 @@ import threading
 import time
 
 
-
 log = logging.getLogger(__name__)
 
 
@@ -61,7 +60,9 @@ class WatchDog(object):
         tid = ctypes.c_long(tid)
         if not inspect.isclass(exctype):
             exctype = type(exctype)
-        res = ctypes.pythonapi.PyThreadState_SetAsyncExc(tid, ctypes.py_object(exctype))
+        res = ctypes.pythonapi.PyThreadState_SetAsyncExc(
+            tid, ctypes.py_object(exctype)
+        )
         if res == 0:
             log.error("invalid thread id")
         elif res != 1:
@@ -131,11 +132,15 @@ class WatchDog(object):
         """
         instances = list()
         if self.reload:
-            self.instance_set = [instance.re_load() for instance in self.instance_set]
+            self.instance_set = [
+                instance.re_load() for instance in self.instance_set
+            ]
             self.reload = False
             instances = self.instance_set
         else:
-            instances = [thread for thread in self.instance_set if thread.name in dead_threads]
+            instances = [
+                thread for thread in self.instance_set if thread.name in dead_threads
+            ]
 
         threads_set = dict()
 

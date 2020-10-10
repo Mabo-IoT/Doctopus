@@ -12,6 +12,7 @@ log = logging.getLogger(__name__)
 
 MAXLEN = 100000
 
+
 class RedisWrapper:
     """
     包装 redis 库, 用 lua 脚本作为入队筛选机制
@@ -34,7 +35,6 @@ class RedisWrapper:
 
         # 测试redis连通性
         self.test_connect()
-
 
     def test_connect(self):
         """
@@ -69,13 +69,16 @@ class RedisWrapper:
         """
         try:
             # if not exists data_stream, make a data_stream
-            result = self.__db.xgroup_create("data_stream", group_name, mkstream=True)
+            self.__db.xgroup_create("data_stream", group_name, mkstream=True)
             self.__db.xtrim("data_stream", MAXLEN)
-
         except exceptions.ResponseError as e:
             # 1. exist group , no need panic
             if "already exists" in str(e):
-                log.info("Already exists group {} for data stream".format(group_name))
+                log.info(
+                    "Already exists group {} for data stream".format(
+                        group_name
+                    )
+                )
         except Exception as e:
             log.error(e)
             raise e
@@ -93,7 +96,9 @@ class RedisWrapper:
         streams = {
             "data_stream": ">",
         }
-        result = self.__db.xreadgroup(group_name, consumer, streams, count=1, block=1000)
+        result = self.__db.xreadgroup(
+            group_name, consumer, streams, count=1, block=1000
+        )
 
         return result
 
@@ -112,7 +117,9 @@ class RedisWrapper:
             "data_stream": id,
         }
 
-        result = self.__db.xreadgroup(group_name, consumer, streams, count=10, block=1000)
+        result = self.__db.xreadgroup(
+            group_name, consumer, streams, count=10, block=1000
+        )
         return result
 
     def xPending(self, group_name):
@@ -319,7 +326,12 @@ class InfluxdbWrapper:
                 log.error("\n%s", e)
                 time.sleep(2)
 
-    def send(self, json_body, time_precision='s', database=None, retention_policy=None):
+    def send(
+            self,
+            json_body,
+            time_precision='s',
+            database=None,
+            retention_policy=None):
         """
         Write to multiple time series names
         :param json_body:  list of dictionaries, each dictionary represents a point,
@@ -330,8 +342,10 @@ class InfluxdbWrapper:
         :return: bool
         """
         if self.test_connect():
-            return self.__db.write_points(json_body, time_precision=time_precision,
-                                          database=database, retention_policy=retention_policy)
+            return self.__db.write_points(
+                json_body, time_precision=time_precision,
+                database=database, retention_policy=retention_policy
+            )
         else:
             return False
 

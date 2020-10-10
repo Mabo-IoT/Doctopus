@@ -1,5 +1,4 @@
 import unittest
-import time
 
 from Doctopus.lib.database_wrapper import RedisWrapper
 
@@ -12,7 +11,6 @@ class TestRedis(unittest.TestCase):
             "db": 4,
         }
         self.client = RedisWrapper(conf)
-
 
     def testAddGroup(self):
         group_name = "test_group"
@@ -42,6 +40,7 @@ class TestRedis(unittest.TestCase):
         group_name = "test_group"
         id = "1571041740221-0"
         self.client.ack(group_name, id)
+
 
 if __name__ == "__main__":
     unittest.main()

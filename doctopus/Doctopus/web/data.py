@@ -143,4 +143,3 @@ class Upload:
         resp.body = json.dumps("Upload configuration now, wait please")
         resp.content_type = "application/json"
         resp.status = falcon.HTTP_200
-

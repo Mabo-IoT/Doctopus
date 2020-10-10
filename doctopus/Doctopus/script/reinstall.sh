@@ -5,4 +5,4 @@ if [ -d "$DIR" ]; then
     rm -rf "$DIR"
     echo 'clean build/'
 fi
-python setup.py install 
+python setup.py install

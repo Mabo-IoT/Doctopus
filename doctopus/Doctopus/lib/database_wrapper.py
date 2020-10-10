@@ -3,7 +3,7 @@ import logging
 import time
 
 import redis
-from redis import exceptions 
+from redis import exceptions
 import requests
 from influxdb import InfluxDBClient
 # from etcd import Client
@@ -34,11 +34,11 @@ class RedisWrapper:
 
         # 测试redis连通性
         self.test_connect()
-        
+
 
     def test_connect(self):
         """
-        初始化连接 Redis 数据库, 确保 redis 连接成功 
+        初始化连接 Redis 数据库, 确保 redis 连接成功
         :return: None
         """
         while True:
@@ -60,33 +60,33 @@ class RedisWrapper:
         with open(lua_script_file, 'r') as fn:
             script = fn.read()
             self.sha = self.__db.script_load(script)
-    
+
     def addGroup(self, group_name):
         """
         add group for data stream
-        args: 
+        args:
             group_name: string  ;group name
         """
         try:
             # if not exists data_stream, make a data_stream
             result = self.__db.xgroup_create("data_stream", group_name, mkstream=True)
             self.__db.xtrim("data_stream", MAXLEN)
-                
+
         except exceptions.ResponseError as e:
             # 1. exist group , no need panic
             if "already exists" in str(e):
                 log.info("Already exists group {} for data stream".format(group_name))
         except Exception as e:
             log.error(e)
-            raise e 
-    
+            raise e
+
     def readGroup(self, group_name, consumer):
         """
         Read data_stream by group
-        args: 
+        args:
             group_name: string  ;group name
             consumer: string ;consumer name
-        return: 
+        return:
             result:List[List[byte, List[set(byte, dict{byte:byte})]]]
             [[b'data_stream', [(b'1571295570085-0', {b'MAXLEN': b'700000', b'data': b'\x8a6...'})..only 1]]]
         """
@@ -94,7 +94,7 @@ class RedisWrapper:
             "data_stream": ">",
         }
         result = self.__db.xreadgroup(group_name, consumer, streams, count=1, block=1000)
-        
+
         return result
 
     def readPending(self, group_name, consumer, id):
@@ -114,28 +114,28 @@ class RedisWrapper:
 
         result = self.__db.xreadgroup(group_name, consumer, streams, count=10, block=1000)
         return result
-    
+
     def xPending(self, group_name):
         """
         Return the pending messages ID info
-        args:  
+        args:
             group_name: string  ;group name
-        return: 
-            result: {'pending': 3263, 
-                'min': b'1571038514316-0', 
-                'max': b'1571041788324-0', 
+        return:
+            result: {'pending': 3263,
+                'min': b'1571038514316-0',
+                'max': b'1571041788324-0',
                 'consumers': [
-                    {'name': b'chitu', 'pending': 50}, 
+                    {'name': b'chitu', 'pending': 50},
                     {'name': b'kafka', 'pending': 3213}]
             }
         """
         result = self.__db.xpending("data_stream", group_name)
         return result
-    
+
     def ack(self, group_name, *ids):
         """
         ACK ids
-        args: 
+        args:
             group_name: string ;group name
             *ids: data id
         """
@@ -191,7 +191,7 @@ class RedisWrapper:
         Add value(s) to set name
         :param name: set name
         :param values: set values
-        :return: 
+        :return:
         """
         return self.__db.sadd(name, *values)
 
@@ -206,9 +206,9 @@ class RedisWrapper:
     def rpush(self, name, *values):
         """
         Push ``values`` onto the tail of the list ``name``
-        :param name: key_name 
-        :param values: 
-        :return: 
+        :param name: key_name
+        :param values:
+        :return:
         """
         return self.__db.rpush(name, *values)
 
@@ -366,7 +366,7 @@ class EtcdWrapper:
     def test_connect(self):
         """
         test etcd server
-        :return: 
+        :return:
         """
         url = 'http://' + self.host + ':' + str(self.port) + '/version'
         try:

@@ -21,9 +21,9 @@ class Status:
         2.if doesn't put get_status order in redis;
         3.listen to redis and take set
         4.if the parameter flush, refresh the history cache
-        :param req: 
-        :param resp: 
-        :return: 
+        :param req:
+        :param resp:
+        :return:
         """
         if req.params.get("flush"):
             self.__redis.delete(self.set_name)
@@ -52,15 +52,15 @@ class Status:
         """
         put get_status order in redis
         :param order_name: status order_name
-        :return: 
+        :return:
         """
         self.__redis.rpush("order_name", order_name)
 
     def __listen(self, timeout=3):
         """
         check redis specific set_name and return value if it is not None
-        :param timeout: 
-        :return: 
+        :param timeout:
+        :return:
         """
         start_time = time.time()
         while True:

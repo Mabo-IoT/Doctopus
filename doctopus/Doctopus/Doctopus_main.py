@@ -20,9 +20,9 @@ class Check(object):
     def work(self, queues, **kwargs):
         """
         put check's data in queues, so Handler can use
-        :param queues: 
-        :param kwargs: 
-        :return: 
+        :param queues:
+        :param kwargs:
+        :return:
         """
         self.data_queue = data_queue = queues['data_queue']
 
@@ -78,9 +78,9 @@ class Handler(object):
 
     def enque_prepare(self, processed_dicts):
         """
-        process data_dicts, then put data_dicts to queue so sender can take it         
-        :param processed_dicts: 
-        :return: 
+        process data_dicts, then put data_dicts to queue so sender can take it
+        :param processed_dicts:
+        :return:
         """
         data = None
         if isinstance(processed_dicts, (types.GeneratorType, list)):
@@ -97,8 +97,8 @@ class Handler(object):
     def process_dict(self, processed_dict):
         """
         process dict to the format sender need
-        :param processed_dict: 
-        :return: 
+        :param processed_dict:
+        :return:
         """
         table_name = processed_dict.get('table_name') or self.table_name
 
@@ -149,7 +149,7 @@ class Handler(object):
         tags,(choose)
         data_value,(must)
         measurement(must)
-        :param raw_data: 
-        :return: 
+        :param raw_data:
+        :return:
         """
         pass

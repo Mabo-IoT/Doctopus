@@ -5,7 +5,7 @@ import time
 import json
 import requests
 from kafka import KafkaProducer
-from kafka import errors  as Errors
+from kafka import errors as Errors
 
 log = logging.getLogger(__name__)
 
@@ -19,7 +19,7 @@ log = logging.getLogger(__name__)
 
 class KafkaWrapper:
     """
-    Producer is thread safe, it will start a back thread automatically to send messages. 
+    Producer is thread safe, it will start a back thread automatically to send messages.
     """
     def __init__(self, conf):
         self.conf: dict = conf
@@ -47,14 +47,14 @@ class KafkaWrapper:
         """
         Pack redis data to kafka msg
         Args:
-            data: redis msg dict i.e. 
+            data: redis msg dict i.e.
                 {
                     "table_name": string, # measurement name
                     "fields": {
                         "...": fields, # device channels
                         "tags":{
                             "eqpt_no": # string, device eqpt_no
-                            "...": "..." # others tags 
+                            "...": "..." # others tags
                         }
                         "unit": string,# timestamp unit s,ms,us
                     time: int, # timestamp
@@ -65,9 +65,9 @@ class KafkaWrapper:
             {
                 "ts": ts,   # timestamp, default unit is s
                 "ip": "10.203.122.181", # local machine ip
-                "dataid": 3605, # 
+                "dataid": 3605, #
                 "org": 3101, # org id is default 3101
-                "dims": {        
+                "dims": {
                     "data_name": string, # measurement name
                     "eapt_no": string,   # tags eapt_no
                     "...": "...",        # more tags
@@ -99,7 +99,7 @@ class KafkaWrapper:
             msg["vals"] = fields
 
             # time
-            if unit == 's': 
+            if unit == 's':
                 msg["ts"] =  timestamp
             elif unit == 'm':
                 msg["ts"] = timestamp / 1000
@@ -109,11 +109,11 @@ class KafkaWrapper:
             msg["vals"]["time"] = msg["ts"]
             # fields["time"] = msg["ts"] #add by wmm 2020/7/7
             # msg["vals"].update(fields) #add by wmm 2020/7/7
-        
+
         except Exception as e:
             raise e
 
         return msg
 
 
-        
+

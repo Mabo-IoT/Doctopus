@@ -35,7 +35,7 @@ local function threshold(fields, timestamp, time_range)
     --    t_flag get True when time is longer than threshold time range.
 
     local eqpt_no = cmsgpack.unpack(fields)['tags']['eqpt_no']
-    local threshold_name = string.format("threshold_%s_%s", eqpt_no, cmsgpack.unpack(table_name)) 
+    local threshold_name = string.format("threshold_%s_%s", eqpt_no, cmsgpack.unpack(table_name))
     local old_fields = redis.call("HGET", threshold_name , "fields")
     local old_timestamp = redis.call("HGET", threshold_name, "timestamp")
 

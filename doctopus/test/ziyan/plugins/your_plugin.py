@@ -18,7 +18,7 @@ class MyCheck(Check):
         :param command: user defined parameter.
         :return: the data you requested.
         """
-        data = [random.randint(0,1), round(random.uniform(21.0,30.0),2), "this is a msg"]
+        data = [random.randint(0, 1), round(random.uniform(21.0, 30.0), 2), "this is a msg"]
         log.debug('%s', data)
         time.sleep(2)
         yield data
@@ -51,8 +51,8 @@ class MyHandler(Handler):
         'table_name',[str]   optional
         'timestamp',int}      optional
 
-        :param raw_data: 
-        :return: 
+        :param raw_data:
+        :return:
         """
         # exmple.
         # 数据经过处理之后生成 value_list
@@ -61,5 +61,5 @@ class MyHandler(Handler):
 
 
         # user 可以在handle里自己按数据格式制定tags
-        user_postprocessed = {'data_value': data_value_list,}
+        user_postprocessed = {'data_value': data_value_list}
         yield user_postprocessed

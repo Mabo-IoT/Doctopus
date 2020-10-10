@@ -15,7 +15,7 @@ def init():
     with open(lua_script_file, 'r') as fn:
         script = fn.read()
         sha = db.script_load(script)
-    
+
     return db, sha
 
 def generateMessage() -> dict:
@@ -41,7 +41,7 @@ def main():
     db, sha = init()
     while True:
         msg: dict = generateMessage()
-        
+
         table_name = msgpack.packb(msg["table_name"])
         fields = msgpack.packb(msg["fields"])
         timestamp = msgpack.packb(msg["timestamp"])

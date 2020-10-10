@@ -8,7 +8,7 @@ services:
     ports:
       - 2181:2181
     volumes:
-      - zookeeper-data:/opt/zookeeper-3.4.13/data  
+      - zookeeper-data:/opt/zookeeper-3.4.13/data
       - zookeeper-conf:/opt/zookeeper-3.4.13/conf
     environment:
       ZOO_MY_ID: 1

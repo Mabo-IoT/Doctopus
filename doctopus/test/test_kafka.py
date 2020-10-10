@@ -13,13 +13,12 @@ class TestKafka(unittest.TestCase):
             "bootstrap_servers": "192.168.1.21:9091",
             "topic": "custom_collector_json",
             "ip": "192.168.1.21",
-            "org":3101,
+            "org": 3101,
         }
         self.client = KafkaWrapper(conf)
-        
-    
+
+
     def testSendMessage(self):
-        
         for i in range(10):
             msg = self.generateMessage()
             # print(msg)
@@ -30,12 +29,12 @@ class TestKafka(unittest.TestCase):
         data = {
             "table_name": "performance",
             "time": int(time.time()),
-            "fields":{
-                "status": random.randint(0,1),
-                "temp": round(random.uniform(20.0, 29.0),2),
-                "unit": "s", 
+            "fields": {
+                "status": random.randint(0, 1),
+                "temp": round(random.uniform(20.0, 29.0), 2),
+                "unit": "s",
                 "tags": {
-                    "eapt_no":"1900",
+                    "eapt_no": "1900",
                     "source": "mabo01",
                     },
             }
@@ -56,12 +55,12 @@ class TestKafka(unittest.TestCase):
             "dataid": dataid,
             "org": org,
             "dims": {
-                "measurement":"Performance",
+                "measurement": "Performance",
                 "eqpt_no": "1900",
             },
             "vals": {
-                "status": random.randint(0,1),
-                "temp": round(random.uniform(20.1,30.0), 2),
+                "status": random.randint(0, 1),
+                "temp": round(random.uniform(20.1, 30.0), 2),
             },
         }
 

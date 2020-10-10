@@ -3,7 +3,7 @@
 from logging import getLogger
 
 import msgpack
-import pendulum
+import datetime
 import sys
 
 if sys.version_info[0] == 3 and sys.version_info[1] >= 5:
@@ -41,9 +41,9 @@ class Sender(object):
     def work(self, queue, **kwargs):
         """
         send data to redis and watchdog
-        :param queue: 
-        :param kwargs: 
-        :return: 
+        :param queue:
+        :param kwargs:
+        :return:
         """
         sender_pipe = queue['sender']
         while True:
@@ -55,8 +55,8 @@ class Sender(object):
     def pack(self, data):
         """
         pack data and send data to redis
-        :param data: 
-        :return: 
+        :param data:
+        :return:
         """
         table_name = data['table_name']
         fields = data['fields']
@@ -64,11 +64,17 @@ class Sender(object):
 
         if 'unit' in fields.keys():
             if fields['unit'] == 's':
-                date_time = pendulum.from_timestamp(timestamp, tz='Asia/Shanghai').to_datetime_string()
+                date_time = datetime.datetime.fromtimestamp(
+                    timestamp
+                ).strftime("%Y-%m-%d %H:%M:%S")
             else:
-                date_time = pendulum.from_timestamp(timestamp / 1000000, tz='Asia/Shanghai').to_datetime_string()
+                date_time = datetime.datetime.fromtimestamp(
+                    timestamp / 1000000
+                ).strftime("%Y-%m-%d %H:%M:%S.%f")
         else:
-            date_time = pendulum.from_timestamp(timestamp, tz='Asia/Shanghai').to_datetime_string()
+            date_time = datetime.datetime.fromtimestamp(
+                timestamp
+            ).strftime("%Y-%m-%d %H:%M:%S")
 
         log_str = self.log_format.format(table_name, fields, date_time)
         # show log or not
@@ -80,7 +86,9 @@ class Sender(object):
         timestamp = msgpack.packb(timestamp)
         # send data to redis
         try:
-            lua_info = self.db.enqueue(table_name=table_name, fields=fields, timestamp=timestamp)
+            lua_info = self.db.enqueue(
+                table_name=table_name, fields=fields, timestamp=timestamp
+            )
             log.info('\n' + lua_info.decode())
         except Exception as e:
             log.error("\n%s", e)
@@ -88,7 +96,7 @@ class Sender(object):
     def send_to_communication(self, data):
         """
         send data to communication instance(singleinstance)
-        :param data: 
-        :return: 
+        :param data:
+        :return:
         """
         self.communication.data[data["table_name"]] = data

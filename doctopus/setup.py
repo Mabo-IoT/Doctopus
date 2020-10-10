@@ -11,18 +11,22 @@ LastEditTime: 2020-04-28 16:51:37
 from setuptools import setup, find_packages
 import sys
 
+version = '0.4.7'
+
 if sys.version_info[0] == 3 and sys.version_info[1] >= 5:
     setup(
         name='Doctopus',
-        version='0.4.6',
+        version=version,
         author='',
         author_email='',
         description='A distributed data collector',
         packages=find_packages(exclude=[]),
         include_package_data=True,
         license='MIT',
-        install_requires=['pendulum', 'redis',
-                          'influxdb', 'msgpack-python', 'toml', 'falcon', 'waitress', 'kafka-python'],
+        install_requires=[
+            'pendulum', 'redis', 'influxdb', 'msgpack-python',
+            'toml', 'falcon', 'waitress', 'kafka-python'
+        ],
         entry_points={
             'console_scripts': [
                 'doctopus=Doctopus:main'
@@ -32,15 +36,18 @@ if sys.version_info[0] == 3 and sys.version_info[1] >= 5:
 else:
     setup(
         name='Doctopus',
-        version='0.4.6',
+        version=version,
         author='',
         author_email='',
         description='A distributed data collector',
         packages=find_packages(exclude=[]),
         include_package_data=True,
         license='MIT',
-        install_requires=['pendulum', 'redis', 'gevent', 'greenlet',
-                          'influxdb', 'msgpack-python', 'toml', 'falcon', 'waitress','kafka-python'],
+        install_requires=[
+            'pendulum', 'redis', 'gevent', 'greenlet',
+            'influxdb', 'msgpack-python', 'toml', 'falcon',
+            'waitress', 'kafka-python'
+        ],
         entry_points={
             'console_scripts': [
                 'doctopus=Doctopus:main'

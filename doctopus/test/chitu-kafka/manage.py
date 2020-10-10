@@ -10,7 +10,7 @@ from Doctopus.web.app import get_app
 
 try:
     from queue import Queue
-except:
+except Exception:
     from Queue import Queue
 
 from logging import getLogger
@@ -60,7 +60,9 @@ def start_ziyan():
 
     # start workers instance
     for worker in workers:
-        thread = Thread(target=worker.work, args=(queue,), name='%s' % worker.name)
+        thread = Thread(
+            target=worker.work, args=(queue,), name='%s' % worker.name
+        )
         thread.setDaemon(True)
         thread.start()
         thread_set[worker.name] = thread
@@ -74,7 +76,11 @@ def start_ziyan():
 
     # start watch instance
     watch = WatchDog(all_conf)
-    watch = Thread(target=watch.work, name='%s' % watch.name, args=(thread_set, queue, workers))
+    watch = Thread(
+        target=watch.work,
+        name='%s' % watch.name,
+        args=(thread_set, queue, workers)
+    )
     watch.setDaemon(True)
     watch.start()
 
@@ -98,42 +104,70 @@ def start_chitu():
         thread.start()
         workers.append(work)
         thread_set[work.name] = thread
-        
+
         # start pending data process
         pending = Transport(all_conf, redis_address)
         pending.name = 'redis_pending_' + str(redis_address['db'])
-        thread = Thread(target=pending.pending, args=(), name='%s' % pending.name)
+        thread = Thread(
+            target=pending.pending, args=(), name='%s' % pending.name
+        )
         thread.start()
         workers.append(pending)
         thread_set[pending.name] = thread
 
-
     # start communication instance
     communication = Communication(all_conf)
-    thread = Thread(target=communication.work, args=(), name='%s' % communication.name)
+    thread = Thread(
+        target=communication.work, args=(), name='%s' % communication.name
+    )
     thread.setDaemon(True)
     thread.start()
-    
 
     # start watch instance
     watch = WatchDog(all_conf)
-    watch = Thread(target=watch.work, name='watchdog', args=(thread_set, queue, workers))
+    watch = Thread(
+        target=watch.work, name='watchdog', args=(thread_set, queue, workers)
+    )
     watch.setDaemon(True)
     watch.start()
 
 
 if __name__ == '__main__':
-    parse = argparse.ArgumentParser(prog='Doctopus', description='A distributed data collector.',
-                                    usage="\n"
-                                          "python manage.py [-h] [-a ACTION] [-v] [-t {ziyan,chitu}] [-i IP] [-p PORT]")
-    parse.add_argument('-a', '--action', action='store', default='run', help='Run/test the project, default run')
-    parse.add_argument('-v', '--version', action='version', default=None, version='%(prog)s 0.4.6')
-    parse.add_argument('-t', '--target', default='ziyan', choices=['ziyan', 'chitu'],
-                       help='selelct the target, default ziyan')
-    parse.add_argument('-i', '--ip', default='0.0.0.0',
-                       help="Hostname or IP address on which to listen, default is '0.0.0.0', "
-                            "which means 'all IP addresses on this host'.")
-    parse.add_argument('-p', '--port', default='8000', help="TCP port on which to listen, default is '8000'.")
+    version = '0.4.7'
+    parse = argparse.ArgumentParser(
+        prog='Doctopus', description='A distributed data collector.',
+        usage=("\npython manage.py [-h] [-a ACTION] "
+               "[-v] [-t {ziyan,chitu}] [-i IP] [-p PORT]")
+    )
+    parse.add_argument(
+        '-a', '--action',
+        action='store',
+        default='run',
+        help='Run/test the project, default run'
+    )
+    parse.add_argument(
+        '-v', '--version',
+        action='version',
+        default=None,
+        version='%(prog)s {}'.format(version)
+    )
+    parse.add_argument(
+        '-t', '--target',
+        default='ziyan', choices=['ziyan', 'chitu'],
+        help='selelct the target, default ziyan'
+    )
+    parse.add_argument(
+        '-i', '--ip',
+        default='0.0.0.0',
+        help=("Hostname or IP address on which to listen, "
+              "default is '0.0.0.0', "
+              "which means 'all IP addresses on this host'.")
+    )
+    parse.add_argument(
+        '-p', '--port',
+        default='8000',
+        help="TCP port on which to listen, default is '8000'."
+    )
 
     command = parse.parse_args().action
     target = parse.parse_args().target

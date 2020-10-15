@@ -1,6 +1,5 @@
-
 application = 'chitu'
-send_to_where = 'kafka' # influxdb, kafka
+send_to_where = 'kafka' # influxdb, kafka, mqtt, timescale
 
 [data_stream]
     group = 'test_group'
@@ -23,13 +22,22 @@ send_to_where = 'kafka' # influxdb, kafka
     # which db your data reside in ?
     db = 1
 
+[mqtt]
+    client_id = 'custom'
+    host = '127.0.0.1'
+    port = 1883
+    keepalive = 60
+    username = ''
+    password = ''
+    qos = 2
+    topics = ['']
+
 [kafka]
     bootstrap_servers = "127.0.0.1:9092"
     topic = "custom_collector_json"
     org = 3101
     dataid = 3502
     ip = "127.0.0.1"
-
 
 [influxdb]
     host = "10.0.0.0"

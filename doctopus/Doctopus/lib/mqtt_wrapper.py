@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+"""向MQTT bridge发布/订阅消息"""
 
 import json
 import logging

@@ -22,14 +22,31 @@ send_to_where = 'kafka' # influxdb, kafka, mqtt, timescale
     # which db your data reside in ?
     db = 1
 
+[timescale]
+    # 数据库连接参数
+    host = '127.0.0.1'
+    port = 5432
+    user = 'postgres'
+    password = 'postgres'
+    dbname = 'postgres'
+        [timescale.table]
+        # 数据表参数
+        schema_name = 'device_tables'
+        hypertable_name = 'device_XX_XX'     # device_AVL_01
+        time_field = 'recordtime'
+
 [mqtt]
-    client_id = 'custom'
     host = '127.0.0.1'
     port = 1883
+    # 客户端ID，为空则使用随机值
+    client_id = ''
+    # 心跳包发送时间间隔
     keepalive = 60
     username = ''
     password = ''
+    # 服务质量，可选值为：0, 1, 2
     qos = 2
+    # 发布/订阅的主题
     topics = ['']
 
 [kafka]

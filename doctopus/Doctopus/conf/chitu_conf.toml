@@ -1,4 +1,5 @@
 application = 'chitu'
+data_source = 'redis'   # redis, mqtt
 send_to_where = 'kafka' # influxdb, kafka, mqtt, timescale
 
 [data_stream]

@@ -13,6 +13,7 @@ else:
     from Doctopus.lib.communication_2 import Communication
 from Doctopus.lib.database_wrapper import InfluxdbWrapper, RedisWrapper
 from Doctopus.lib.kafka_wrapper import KafkaWrapper
+from Doctopus.lib.mqtt_wrapper import MqttWrapper
 from Doctopus.utils.util import get_conf
 
 log = logging.getLogger(__name__)
@@ -24,11 +25,11 @@ class Transport:
         self.group = conf['data_stream']['group']
         self.consumer = conf['data_stream']['consumer']
 
-        self.redis = RedisWrapper(redis_address)
         self.data_original = None
         self.name = None
         self.communication = Communication(conf)
 
+        self.redis = RedisWrapper(redis_address)
         # create group for data_stream
         self.redis.addGroup(self.group)
 
@@ -36,6 +37,9 @@ class Transport:
             self.db = InfluxdbWrapper(conf['influxdb'])
         elif self.to_where == 'kafka':
             self.db = self.initKafka(conf['kafka'])
+        elif self.to_where == 'mqtt':
+            pass
+            # TODO:  <19-10-20, YJ-Work> #
 
     def initKafka(self, conf):
         while True:
@@ -168,7 +172,6 @@ class Transport:
                     return json_data
                 except Exception as e:
                     log.error("\n%s", e)
-
             elif self.to_where == 'kafka':
                 try:
                     json_data = self.db.pack(data)
@@ -176,6 +179,9 @@ class Transport:
                 except Exception as e:
                     traceback.print_exc()
                     log.error(e)
+            elif self.to_where == 'mqtt':
+                pass
+                # TODO:  <19-10-20, YJ-Work> #
             else:
                 data['fields'].pop('tags')
                 data['fields'].pop('unit')
@@ -204,6 +210,9 @@ class Transport:
                     data["dims"]["data_name"]))
             except Exception as e:
                 raise e
+        elif self.to_where == 'mqtt':
+            pass
+            # TODO:  <19-10-20, YJ-Work> #
 
     def getData(self):
         """Get data from data_stream
@@ -253,4 +262,7 @@ class Transport:
             self.db = InfluxdbWrapper(conf['influxdb'])
         elif self.to_where == 'kafka':
             self.db = KafkaWrapper(conf['kafka'])
+        elif self.to_where == 'mqtt':
+            pass
+            # TODO:  <19-10-20, YJ-Work> #
         return self

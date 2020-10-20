@@ -103,7 +103,7 @@ class MqttWrapper(object):
 
         """
         log.info("Disconnection with reasonCode = {}".format(reasonCode))
-        client.loop_stop()
+        #  client.loop_stop()
 
     def __on_publish(self, client, userdata, mid):
         """called when a message that was to be sent using the publish()
@@ -162,16 +162,16 @@ class MqttWrapper(object):
         msg = json.loads(message.payload.decode())
         self.msg_queue.put_nowait(msg)
 
-    def pubMessage(self, msg):
+    def pubMessage(self, msg_queue):
         """Publish message to MQTT bridge."""
         try:
             self._client.loop_start()
-            while True:
-                payload = json.dumps(msg)
-                for topic in self._topics:
-                    self._client.publish(topic=topic,
-                                         payload=payload,
-                                         qos=self._qos)
+            msg = msg_queue.get()
+            payload = json.dumps(msg)
+            for topic in self._topics:
+                self._client.publish(topic=topic,
+                                     payload=payload,
+                                     qos=self._qos)
         except Exception as err:
             log.error(err)
 

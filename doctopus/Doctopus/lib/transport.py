@@ -1,16 +1,20 @@
 # -*- coding: utf-8 -*-
 
 import logging
-import msgpack
-import time
 import sys
+import time
 import traceback
+from datetime import datetime
+from queue import Queue
 
+import msgpack
 from redis import exceptions
+
 if sys.version_info[0] == 3 and sys.version_info[1] >= 5:
     from Doctopus.lib.communication import Communication
 else:
     from Doctopus.lib.communication_2 import Communication
+
 from Doctopus.lib.database_wrapper import InfluxdbWrapper, RedisWrapper
 from Doctopus.lib.kafka_wrapper import KafkaWrapper
 from Doctopus.lib.mqtt_wrapper import MqttWrapper
@@ -38,8 +42,8 @@ class Transport:
         elif self.to_where == 'kafka':
             self.db = self.initKafka(conf['kafka'])
         elif self.to_where == 'mqtt':
-            pass
-            # TODO:  <19-10-20, YJ-Work> #
+            self.db = MqttWrapper(conf['mqtt'])
+            self.mqtt_queue = Queue()
 
     def initKafka(self, conf):
         while True:
@@ -64,8 +68,7 @@ class Transport:
                 # NOGROUP for data_stream, recreate it.
                 if "NOGROUP" in str(e):
                     log.error(
-                        str(e) + " Recreate group '{}'".format(self.group)
-                    )
+                        str(e) + " Recreate group '{}'".format(self.group))
                     self.redis.addGroup(self.group)
                 raw_data = None
             except Exception as e:
@@ -132,8 +135,8 @@ class Transport:
                 for k in list(raw_data.keys()):
                     v = raw_data[k]
                     raw_data.pop(k)
-                    raw_data[k.decode('utf-8')
-                             ] = msgpack.unpackb(v, encoding='utf-8')
+                    raw_data[k.decode('utf-8')] = msgpack.unpackb(
+                        v, encoding='utf-8')
                 data["data"] = raw_data
             except Exception as e:
                 traceback.print_exc()
@@ -160,15 +163,13 @@ class Transport:
                     fields = data['fields']
                     timestamp = data['time']
 
-                    json_data = [
-                        {
-                            'measurement': measurement,
-                            'tags': tags,
-                            'time': timestamp,
-                            'fields': fields,
-                            'unit': unit
-                        }
-                    ]
+                    json_data = [{
+                        'measurement': measurement,
+                        'tags': tags,
+                        'time': timestamp,
+                        'fields': fields,
+                        'unit': unit
+                    }]
                     return json_data
                 except Exception as e:
                     log.error("\n%s", e)
@@ -180,8 +181,24 @@ class Transport:
                     traceback.print_exc()
                     log.error(e)
             elif self.to_where == 'mqtt':
-                pass
-                # TODO:  <19-10-20, YJ-Work> #
+                try:
+                    data['fields'].pop('tags', None)
+                    data['fields'].pop('unit', None)
+
+                    schema_table = data['table_name']
+                    fields = data['fields']
+                    ts = data['time']
+                    timestamp = datetime.fromtimestamp(ts).strftime(
+                        "%Y-%m-%d %H:%M:%S")
+
+                    json_data = {
+                        "schema_table": schema_table,
+                        "timestamp": timestamp,
+                        "fields": fields
+                    }
+                    return json_data
+                except Exception as e:
+                    raise e
             else:
                 data['fields'].pop('tags')
                 data['fields'].pop('unit')
@@ -211,8 +228,13 @@ class Transport:
             except Exception as e:
                 raise e
         elif self.to_where == 'mqtt':
-            pass
-            # TODO:  <19-10-20, YJ-Work> #
+            self.mqtt_queue.put(data)
+            log.info('---> {}'.format(data))
+            try:
+                self.db.pubMessage(self.mqtt_queue)
+                log.info('Publish data to MQTT')
+            except Exception as err:
+                log.error(err)
 
     def getData(self):
         """Get data from data_stream
@@ -263,6 +285,5 @@ class Transport:
         elif self.to_where == 'kafka':
             self.db = KafkaWrapper(conf['kafka'])
         elif self.to_where == 'mqtt':
-            pass
-            # TODO:  <19-10-20, YJ-Work> #
+            self.db = MqttWrapper(conf['mqtt'])
         return self

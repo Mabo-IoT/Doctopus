@@ -10,7 +10,7 @@ import psycopg2
 import toml
 from DBUtils.PooledDB import PooledDB
 from psycopg2.errors import (DuplicateSchema, DuplicateTable, InterfaceError,
-                             OperationalError)
+                             OperationalError, UndefinedColumn, UndefinedTable)
 
 log = logging.getLogger(__name__)
 
@@ -30,15 +30,22 @@ class TimescaleWrapper(object):
         self._user: str = conf.get('user', None)
         self._password: str = conf.get('password', None)
         self._dbname: str = conf.get('dbname', None)
+        # Table info
         self._schema_name: str = conf['table'].get('schema_name',
                                                    'device_tables')
-        self._hypertable_name: str = conf['table'].get('hypertable_name',
-                                                       'device_XX_XX')
+        self._table_name: str = conf['table'].get('table_name', 'device_XX_XX')
         self._time_field: str = conf['table'].get('time_field', 'recordtime')
+        # Column info
+        _cols: dict = conf.get('columns', dict())
 
-        # Connection pool
+        # Connection
         self.conn = None
-        self._getConnection()
+        self.getConnection()
+        # Create
+        self._createSchema(schema=self._schema_name)
+        self._createHypertable(schema=self._schema_name,
+                               hypertable=self._table_name,
+                               cols=_cols)
 
     def __createPool(self):
         """Create TimescaleDB connection pool
@@ -66,7 +73,7 @@ class TimescaleWrapper(object):
 
         return pool
 
-    def _getConnection(self):
+    def getConnection(self):
         """Get TimescaleDB connection
         :returns: connection object
 
@@ -81,7 +88,7 @@ class TimescaleWrapper(object):
                     "TimescaleDB Connection error: {error}".format(error=err))
                 time.sleep(2)
 
-    def _createSchema(self, schema):
+    def _createSchema(self, schema: str):
         """Create schema
 
         :schema: schema name to be created
@@ -93,12 +100,12 @@ class TimescaleWrapper(object):
             cursor.execute(SQL)
             self.conn.commit()
         except DuplicateSchema as warn:
-            log.warning('{hint}: {warn_info}'.format(hint='Pass',
+            log.warning('{hint}: {warn_info}'.format(hint='Create schema',
                                                      warn_info=warn))
         except Exception as err:
             log.error(err)
 
-    def _createTable(self, schema, table, cols):
+    def _createTable(self, schema: str, table: str, cols: dict):
         """Create table
 
         :schema: schema name
@@ -134,12 +141,12 @@ class TimescaleWrapper(object):
             cursor.execute(SQL)
             self.conn.commit()
         except DuplicateTable as warn:
-            log.warning('{hint}: {warn_info}'.format(hint='Pass',
+            log.warning('{hint}: {warn_info}'.format(hint='Create table',
                                                      warn_info=warn))
         except Exception as err:
             log.error(err)
 
-    def _createHypertable(self, schema, hypertable, cols):
+    def _createHypertable(self, schema: str, hypertable: str, cols: dict):
         """Create Hypertable
 
         :schema: schema name
@@ -152,10 +159,9 @@ class TimescaleWrapper(object):
                  }
 
         """
-        time_field = 'recordtime'
         # Build SQL statements
         col_field = "{time_field_name} TIMESTAMPTZ NOT NULL".format(
-            time_field_name=time_field)
+            time_field_name=self._time_field)
         for col, type_ in cols.items():
             if type_ in ['int', 'float']:
                 col_field = '{curr_col}, {new_col} {attr_1} {attr_2}'.format(
@@ -176,7 +182,7 @@ class TimescaleWrapper(object):
                           "'{time_field_name}');").format(
                               schema_name=schema,
                               table_name=hypertable,
-                              time_field_name=time_field)
+                              time_field_name=self._time_field)
         # Execute SQL statements
         try:
             cursor = self.conn.cursor()
@@ -184,16 +190,14 @@ class TimescaleWrapper(object):
             cursor.execute(SQL_HYPERTABLE)
             self.conn.commit()
         except DuplicateTable as warn:
-            log.warning('{hint}: {warn_info}'.format(hint='Pass',
+            log.warning('{hint}: {warn_info}'.format(hint='Create hypertable',
                                                      warn_info=warn))
         except Exception as err:
             log.error(err)
 
-    def _insertData(self, schema, table, datas):
+    def insertData(self, datas: dict):
         """Insert data into the table
 
-        :schema: schema name
-        :table: table name
         :datas: data to be inserted:
             datas = {
                 'XXX': {
@@ -221,8 +225,8 @@ class TimescaleWrapper(object):
         SQL = ("INSERT INTO {schema_name}.{table_name} "
                "({time_field_name}, {columns}) "
                "VALUES (%s, {values})").format(
-                   schema_name=schema,
-                   table_name=table,
+                   schema_name=self._schema_name,
+                   table_name=self._table_name,
                    time_field_name=self._time_field,
                    columns=col_field,
                    values=values)
@@ -231,13 +235,13 @@ class TimescaleWrapper(object):
             cursor = self.conn.cursor()
             cursor.execute(SQL, (dtime, ))
             self.conn.commit()
-        except DuplicateTable as warn:
-            log.warning('{hint}: {warn_info}'.format(hint='Pass',
-                                                     warn_info=warn))
+        except (UndefinedTable, UndefinedColumn) as warn:
+            log.error('{hint}: {warn_info}'.format(hint='SQL Error',
+                                                   warn_info=warn))
         except Exception as err:
             log.error(err)
 
-    def _queryData(self, schema, table, order='id', limit=5):
+    def queryData(self, schema: str, table: str, order='id', limit=5):
         """Query data from the table
 
         :schema: schema name
@@ -260,9 +264,9 @@ class TimescaleWrapper(object):
             cursor = self.conn.cursor()
             cursor.execute(SQL)
             result = cursor.fetchall()
-        except DuplicateTable as warn:
-            log.warning('{hint}: {warn_info}'.format(hint='Pass',
-                                                     warn_info=warn))
+        except (UndefinedTable, UndefinedColumn) as warn:
+            log.error('{hint}: {warn_info}'.format(hint='SQL Error',
+                                                   warn_info=warn))
         except Exception as err:
             log.error(err)
 
@@ -277,7 +281,7 @@ class TimescaleWrapper(object):
             print(data)
         except (OperationalError, InterfaceError):
             log.error('Recreating connection pool......')
-            self._getConnection()
+            self.getConnection()
         except Exception as err:
             log.error(err)
 
@@ -287,53 +291,42 @@ if __name__ == "__main__":
     conf = toml.load(confile)['timescale']
     client = TimescaleWrapper(conf)
 
-    # Test _createSchema
-    schema = 'test'
-    client._createSchema(schema=schema)
+    schema = 'device_tables'
+    table = 'test'
+    hypertable = 'device_XX_XX'
+    cols = {'x': 'int', 'y': 'str', 'z': 'float', 'a': 'int'}
 
     # Test _createTable
-    table = 'num1'
-    cols = {'x': 'int', 'y': 'str', 'z': 'float', 'a': 'int'}
     client._createTable(schema=schema, table=table, cols=cols)
 
-    # Test _createHypertable
-    hypertable = 'hyper_table'
-    client._createHypertable(schema=schema, hypertable=hypertable, cols=cols)
-
-    # Test _insertData
+    # Test insertData
     datas = {
-        'x': {
-            'name': 'x',
+        'column1': {
+            'name': 'column1',
             'title': '速度',
             'value': 100,
             'unit': 'km/h'
         },
-        'y': {
-            'name': 'y',
+        'column2': {
+            'name': 'column2',
             'title': '牵引力',
             'value': 200,
             'unit': 'N'
         },
-        'z': {
-            'name': 'z',
+        'column3': {
+            'name': 'column3',
             'title': '功率',
             'value': 300,
             'unit': 'Kw'
-        },
-        'a': {
-            'name': 'a',
-            'title': '加速度',
-            'value': 400,
-            'unit': 'm/s^2'
-        },
+        }
     }
-    client._insertData(schema=schema, table=hypertable, datas=datas)
+    client.insertData(datas=datas)
 
-    # Test _insertData
-    result = client._queryData(schema=schema,
-                               table=hypertable,
-                               order='recordtime',
-                               limit=2)
+    # Test insertData
+    result = client.queryData(schema=schema,
+                              table=hypertable,
+                              order='recordtime',
+                              limit=2)
     print(result)
 
     # Test use4test

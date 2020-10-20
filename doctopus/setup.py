@@ -25,7 +25,7 @@ if sys.version_info[0] == 3 and sys.version_info[1] >= 5:
         license='MIT',
         install_requires=[
             'pendulum', 'redis', 'influxdb', 'msgpack-python',
-            'toml', 'falcon', 'waitress', 'kafka-python'
+            'toml', 'falcon', 'waitress', 'kafka-python', 'paho-mqtt'
         ],
         entry_points={
             'console_scripts': [
@@ -46,7 +46,7 @@ else:
         install_requires=[
             'pendulum', 'redis', 'gevent', 'greenlet',
             'influxdb', 'msgpack-python', 'toml', 'falcon',
-            'waitress', 'kafka-python'
+            'waitress', 'kafka-python', 'paho-mqtt'
         ],
         entry_points={
             'console_scripts': [

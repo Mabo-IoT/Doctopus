@@ -1,6 +1,7 @@
 application = 'chitu'
-data_source = 'redis'   # redis, mqtt
-send_to_where = 'kafka' # influxdb, kafka, mqtt, timescale
+
+data_source = 'TODO'    # chitu从哪里获取数据，可选值为：redis, mqtt
+send_to_where = 'TODO'  # chitu将数据发送到哪里，可选值为：influxdb, kafka, mqtt, timescale
 
 [data_stream]
     group = 'test_group'
@@ -27,28 +28,29 @@ send_to_where = 'kafka' # influxdb, kafka, mqtt, timescale
     # 数据库连接参数
     host = '127.0.0.1'
     port = 5432
-    user = 'postgres'
-    password = 'postgres'
-    dbname = 'postgres'
+    user = 'postgres'       # TimescaleDB用户名
+    password = 'postgres'   # TimescaleDB密码
+    dbname = 'postgres'     # 要使用的数据库名
         [timescale.table]
-        # 数据表参数
-        schema_name = 'device_tables'
-        hypertable_name = 'device_XX_XX'     # device_AVL_01
-        time_field = 'recordtime'
+            # 数据表参数
+            schema_name = 'device_tables'   # 要使用的模式名
+            table_name = 'device_XX_XX'     # 要使用的表名，应该是设备编号，例如：device_AVL_01
+            time_field = 'recordtime'
+        [timescale.columns]
+            # 数据列参数
+            column1 = 'int'
+            column2 = 'float'
+            column3 = 'str'
 
 [mqtt]
     host = '127.0.0.1'
     port = 1883
-    # 客户端ID，为空则使用随机值
-    client_id = ''
-    # 心跳包发送时间间隔
-    keepalive = 60
+    client_id = ''      # 客户端ID，为空则使用随机值
+    keepalive = 60      # 心跳包发送时间间隔
     username = ''
     password = ''
-    # 服务质量，可选值为：0, 1, 2
-    qos = 2
-    # 发布/订阅的主题
-    topics = ['']
+    qos = 2             # 服务质量，可选值为：0, 1, 2
+    topics = ['test']   # 发布/订阅的主题
 
 [kafka]
     bootstrap_servers = "127.0.0.1:9092"

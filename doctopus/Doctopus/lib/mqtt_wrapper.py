@@ -35,7 +35,7 @@ class MqttWrapper(object):
         self._topics: list = conf.get('topics', list())
 
         # queue
-        self.msg_queue = Queue()
+        self.sub_queue = Queue()
 
         # MQTT client
         self._client = None
@@ -159,14 +159,14 @@ class MqttWrapper(object):
                   This is a class with members topic, payload, qos, retain.
 
         """
-        msg = json.loads(message.payload.decode())
-        self.msg_queue.put_nowait(msg)
+        msg = message.payload
+        self.sub_queue.put(msg)
 
-    def pubMessage(self, msg_queue):
+    def pubMessage(self, pub_queue):
         """Publish message to MQTT bridge."""
         try:
             self._client.loop_start()
-            msg = msg_queue.get()
+            msg = pub_queue.get()
             payload = json.dumps(msg)
             for topic in self._topics:
                 self._client.publish(topic=topic,
@@ -178,8 +178,8 @@ class MqttWrapper(object):
     def subMessage(self):
         """Subscribe to data from MQTT bridge."""
         try:
+            self._client.loop_start()
             for topic in self._topics:
                 self._client.subscribe(topic=topic, qos=self._qos)
-            self._client.loop_forever()
         except Exception as err:
             log.error(err)

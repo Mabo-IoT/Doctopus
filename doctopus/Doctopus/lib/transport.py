@@ -3,6 +3,7 @@
 import logging
 import sys
 import time
+import json
 import traceback
 from datetime import datetime
 from queue import Queue
@@ -18,6 +19,7 @@ else:
 from Doctopus.lib.database_wrapper import InfluxdbWrapper, RedisWrapper
 from Doctopus.lib.kafka_wrapper import KafkaWrapper
 from Doctopus.lib.mqtt_wrapper import MqttWrapper
+from Doctopus.lib.timescale_wrapper import TimescaleWrapper
 from Doctopus.utils.util import get_conf
 
 log = logging.getLogger(__name__)
@@ -25,25 +27,36 @@ log = logging.getLogger(__name__)
 
 class Transport:
     def __init__(self, conf, redis_address):
+        self.from_where = conf.get('data_source', 'redis')
         self.to_where = conf['send_to_where']
-        self.group = conf['data_stream']['group']
-        self.consumer = conf['data_stream']['consumer']
 
         self.data_original = None
         self.name = None
         self.communication = Communication(conf)
 
-        self.redis = RedisWrapper(redis_address)
-        # create group for data_stream
-        self.redis.addGroup(self.group)
+        # Redis conf
+        if self.from_where == 'redis':
+            self.redis = RedisWrapper(redis_address)
+            self.group = conf['data_stream']['group']
+            self.consumer = conf['data_stream']['consumer']
+            # create group for data_stream
+            self.redis.addGroup(self.group)
+        else:
+            pass
 
         if self.to_where == 'influxdb':
             self.db = InfluxdbWrapper(conf['influxdb'])
         elif self.to_where == 'kafka':
             self.db = self.initKafka(conf['kafka'])
         elif self.to_where == 'mqtt':
-            self.db = MqttWrapper(conf['mqtt'])
-            self.mqtt_queue = Queue()
+            self.mqtt_conf = conf.get('mqtt', dict())
+            self.mqtt_put_queue = Queue()
+            self.mqtt = MqttWrapper(self.mqtt_conf)
+        elif self.to_where == 'timescale':
+            self.mqtt_conf = conf.get('mqtt', dict())
+            self.mqtt = MqttWrapper(self.mqtt_conf)
+            self.timescale_conf = conf.get('timescale', dict())
+            self.timescale = TimescaleWrapper(self.timescale_conf)
 
     def initKafka(self, conf):
         while True:
@@ -58,35 +71,48 @@ class Transport:
 
     def work(self, *args):
         while True:
-            try:
-                raw_data = self.getData()
-                log.debug(raw_data)
-                raw_data = self.unpack(raw_data)
-                log.debug(raw_data)
-
-            except exceptions.ResponseError as e:
-                # NOGROUP for data_stream, recreate it.
-                if "NOGROUP" in str(e):
-                    log.error(
-                        str(e) + " Recreate group '{}'".format(self.group))
-                    self.redis.addGroup(self.group)
-                raw_data = None
-            except Exception as e:
-                log.error(e)
-                raw_data = None
-
-            if raw_data:
-                data = self.pack(raw_data["data"])
+            if self.from_where == 'redis':
+                # get and decompress data
                 try:
-                    # send data and ack data id
-                    log.debug("send data")
-                    self.send(data)
-                    log.debug("redis ack data")
-                    self.redis.ack(self.group, raw_data["id"])
-
+                    raw_data = self.getData()
+                    log.debug(raw_data)
+                    raw_data = self.unpack(raw_data)
+                    log.debug(raw_data)
+                except exceptions.ResponseError as e:
+                    # NOGROUP for data_stream, recreate it.
+                    if "NOGROUP" in str(e):
+                        log.error(
+                            str(e) + " Recreate group '{}'".format(self.group))
+                        self.redis.addGroup(self.group)
+                    raw_data = None
                 except Exception as e:
-                    log.error("\n%s", e)
-                    time.sleep(3)
+                    log.error(e)
+                    raw_data = None
+
+                # compress and send data
+                if raw_data:
+                    data = self.pack(raw_data["data"])
+                    try:
+                        # send data and ack data id
+                        log.debug("send data")
+                        self.send(data)
+                        log.debug("redis ack data")
+                        self.redis.ack(self.group, raw_data["id"])
+                    except Exception as e:
+                        log.error("\n%s", e)
+                        time.sleep(3)
+
+            elif self.from_where == 'mqtt':
+                # get and decompress data
+                self.mqtt.subMessage()
+                raw_data = self.mqtt.sub_queue.get()
+
+                # compress and send data
+                if raw_data:
+                    data = json.loads(raw_data.decode())
+                    log.debug('Subscribe data: {}'.format(data))
+                    self.send(data)
+                    log.debug("Sending data")
 
     def pending(self, *args):
         while True:
@@ -184,18 +210,18 @@ class Transport:
                 try:
                     data['fields'].pop('tags', None)
                     data['fields'].pop('unit', None)
+                    data.pop('table_name', None)
 
-                    schema_table = data['table_name']
                     fields = data['fields']
                     ts = data['time']
                     timestamp = datetime.fromtimestamp(ts).strftime(
                         "%Y-%m-%d %H:%M:%S")
 
                     json_data = {
-                        "schema_table": schema_table,
                         "timestamp": timestamp,
                         "fields": fields
                     }
+                    log.debug('Send the following data to MQTT: {}'.format(json_data))
                     return json_data
                 except Exception as e:
                     raise e
@@ -228,11 +254,21 @@ class Transport:
             except Exception as e:
                 raise e
         elif self.to_where == 'mqtt':
-            self.mqtt_queue.put(data)
-            log.info('---> {}'.format(data))
+            self.mqtt_put_queue.put(data)
             try:
-                self.db.pubMessage(self.mqtt_queue)
-                log.info('Publish data to MQTT')
+                self.mqtt.pubMessage(self.mqtt_put_queue)
+                log.info('Publish data to MQTT topics: {}'.format(
+                    self.mqtt_conf.get('topics', list())))
+            except Exception as err:
+                log.error(err)
+        elif self.to_where == 'timescale':
+            try:
+                self.timescale.insertData(data)
+                log.info('Insert data to Timescale: {}.{}.{}'.format(
+                    self.timescale_conf.get('dbname'),
+                    self.timescale_conf.get('table', dict()).get('schema_name'),
+                    self.timescale_conf.get('table', dict()).get('table_name')
+                ))
             except Exception as err:
                 log.error(err)
 
@@ -276,6 +312,7 @@ class Transport:
 
     def re_load(self):
         conf = get_conf()
+        self.from_where = conf.get('data_source', 'redis')
         self.to_where = conf['send_to_where']
         self.data_original = None
         self.name = None
@@ -285,5 +322,10 @@ class Transport:
         elif self.to_where == 'kafka':
             self.db = KafkaWrapper(conf['kafka'])
         elif self.to_where == 'mqtt':
-            self.db = MqttWrapper(conf['mqtt'])
+            self.mqtt_conf = conf.get('mqtt', dict())
+            self.mqtt = MqttWrapper(self.mqtt_conf)
+            self.mqtt_put_queue = Queue()
+        elif self.to_where == 'timescale':
+            self.timescale_conf = conf.get('timescale', dict())
+            self.timescale = TimescaleWrapper(self.timescale_conf)
         return self

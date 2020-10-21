@@ -199,21 +199,24 @@ class TimescaleWrapper(object):
         """Insert data into the table
 
         :datas: data to be inserted:
-            datas = {
-                'XXX': {
-                    'name': 'XXX',
-                    'title': 'XXX',
-                    'value': 100,
-                    'unit': 'km/h'
-                },
-            }
+                datas = {
+                            'timestamp': '2020-10-21 10:19:11',
+                            'fields': {
+                                'v': {
+                                    'name': 'v',
+                                    'title': '速度',
+                                    'value': 65.7,
+                                    'unit': 'km/h'
+                                }
+                            }
+                        }
 
         """
-        col_field = ''
-        values = ''
-        dtime = datetime.now()
+        col_field = ''      # column field
+        values = ''         # VALUES field
+        timestamp = datas.get('timestamp')
         # Build SQL statements
-        for col, data in datas.items():
+        for col, data in datas.get('fields').items():
             if not str(data['value']):
                 # 该值为空
                 continue
@@ -233,7 +236,7 @@ class TimescaleWrapper(object):
         # Execute SQL statements
         try:
             cursor = self.conn.cursor()
-            cursor.execute(SQL, (dtime, ))
+            cursor.execute(SQL, (timestamp, ))
             self.conn.commit()
         except (UndefinedTable, UndefinedColumn) as warn:
             log.error('{hint}: {warn_info}'.format(hint='SQL Error',

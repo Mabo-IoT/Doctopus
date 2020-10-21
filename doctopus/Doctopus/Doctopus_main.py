@@ -3,9 +3,10 @@
 import logging
 import types
 from abc import ABCMeta, abstractmethod
-from Doctopus.utils.util import get_conf
 
 import pendulum
+
+from Doctopus.utils.util import get_conf
 
 log = logging.getLogger("Doctopus.main")
 

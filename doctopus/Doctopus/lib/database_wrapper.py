@@ -3,10 +3,10 @@ import logging
 import time
 
 import redis
-from redis import exceptions
 import requests
+#  from etcd import Client
 from influxdb import InfluxDBClient
-# from etcd import Client
+from redis import exceptions
 
 log = logging.getLogger(__name__)
 
@@ -22,15 +22,13 @@ class RedisWrapper:
     db.script_load(lua_file)
     db.enqueue(**kwargs)  #入队
     """
-
     def __init__(self, conf):
         """
         :param conf: dict, 包含 Redis 的 host, port, db
         """
-        pool = redis.ConnectionPool(
-            host=conf.get('host', 'localhost'),
-            port=conf.get('port', 6379),
-            db=conf.get('db', 0))
+        pool = redis.ConnectionPool(host=conf.get('host', 'localhost'),
+                                    port=conf.get('port', 6379),
+                                    db=conf.get('db', 0))
         self.__db = redis.StrictRedis(connection_pool=pool, socket_timeout=1)
 
         # 测试redis连通性
@@ -74,11 +72,8 @@ class RedisWrapper:
         except exceptions.ResponseError as e:
             # 1. exist group , no need panic
             if "already exists" in str(e):
-                log.info(
-                    "Already exists group {} for data stream".format(
-                        group_name
-                    )
-                )
+                log.info("Already exists group {} for data stream".format(
+                    group_name))
         except Exception as e:
             log.error(e)
             raise e
@@ -90,15 +85,23 @@ class RedisWrapper:
             group_name: string  ;group name
             consumer: string ;consumer name
         return:
-            result:List[List[byte, List[set(byte, dict{byte:byte})]]]
-            [[b'data_stream', [(b'1571295570085-0', {b'MAXLEN': b'700000', b'data': b'\x8a6...'})..only 1]]]
+            result: List[List[byte, List[set(byte, dict{byte:byte})]]]
+            [[
+                b'data_stream',
+                [(b'1571295570085-0', {
+                    b'MAXLEN': b'700000',
+                    b'data': b'\x8a6...'
+                })..only 1]
+            ]]
         """
         streams = {
             "data_stream": ">",
         }
-        result = self.__db.xreadgroup(
-            group_name, consumer, streams, count=1, block=1000
-        )
+        result = self.__db.xreadgroup(group_name,
+                                      consumer,
+                                      streams,
+                                      count=1,
+                                      block=1000)
 
         return result
 
@@ -110,16 +113,24 @@ class RedisWrapper:
             consumer: string ;consumer name
             id: string ; pending data id
         return:
-            result: [[b'data_stream',[(b'id', {b'MEXLEN': b'70000', b'data': b''})....10 ]]]
+            result: [[
+                        b'data_stream',
+                        [(b'id', {
+                            b'MEXLEN': b'70000',
+                            b'data': b''
+                        })...10]
+                    ]]
                     List[List[byte, List[set(byte, dict{byte:byte})]]]
         """
         streams = {
             "data_stream": id,
         }
 
-        result = self.__db.xreadgroup(
-            group_name, consumer, streams, count=10, block=1000
-        )
+        result = self.__db.xreadgroup(group_name,
+                                      consumer,
+                                      streams,
+                                      count=10,
+                                      block=1000)
         return result
 
     def xPending(self, group_name):
@@ -164,7 +175,8 @@ class RedisWrapper:
         """
         Remove and return the first item of the list ``data_queue``
         if ``data_queue`` is an empty list, block indefinitely
-        update: return last item of the list to fetch newest data from device when network recovery
+        update: return last item of the list to fetch newest
+                data from device when network recovery
         """
         return self.__db.rpop(key)
         # return self.__db.lpop(key)
@@ -264,42 +276,38 @@ class InfluxdbWrapper:
             }
         }
     ]
-    db = InfluxdbWrapper('localhost', 8086, 'root', 'root', db) or InfluxdbWrapper(conf)
+    db = InfluxdbWrapper('localhost', 8086, 'root', 'root', db)
+    or
+    db = InfluxdbWrapper(conf)
+
     db.send(josn_data, retention_policy='specify')
     """
-
     def __init__(self, *args, **kwargs):
         if args and len(args) == 5:
-            self.__db = InfluxDBClient(
-                host=args[0],
-                port=args[1],
-                username=args[2],
-                password=args[3],
-                database=args[4],
-                timeout=10
-            )
+            self.__db = InfluxDBClient(host=args[0],
+                                       port=args[1],
+                                       username=args[2],
+                                       password=args[3],
+                                       database=args[4],
+                                       timeout=10)
             self.conf = args
 
         elif args and isinstance(args[0], dict):
-            self.__db = InfluxDBClient(
-                host=args[0].get('host', 'localhost'),
-                port=args[0].get('port', 8086),
-                username=args[0]['username'],
-                password=args[0]['password'],
-                database=args[0]['db'],
-                timeout=args[0].get('timeout', 10)
-            )
+            self.__db = InfluxDBClient(host=args[0].get('host', 'localhost'),
+                                       port=args[0].get('port', 8086),
+                                       username=args[0]['username'],
+                                       password=args[0]['password'],
+                                       database=args[0]['db'],
+                                       timeout=args[0].get('timeout', 10))
             self.conf = args[0]
 
         elif kwargs:
-            self.__db = InfluxDBClient(
-                host=kwargs.get('host', 'localhost'),
-                port=kwargs.get('port', 8086),
-                username=kwargs['username'],
-                password=kwargs['password'],
-                database=kwargs['db'],
-                timeout=kwargs.get('timeout', 10)
-            )
+            self.__db = InfluxDBClient(host=kwargs.get('host', 'localhost'),
+                                       port=kwargs.get('port', 8086),
+                                       username=kwargs['username'],
+                                       password=kwargs['password'],
+                                       database=kwargs['db'],
+                                       timeout=kwargs.get('timeout', 10))
             self.conf = kwargs
 
         else:
@@ -326,26 +334,28 @@ class InfluxdbWrapper:
                 log.error("\n%s", e)
                 time.sleep(2)
 
-    def send(
-            self,
-            json_body,
-            time_precision='s',
-            database=None,
-            retention_policy=None):
+    def send(self,
+             json_body,
+             time_precision='s',
+             database=None,
+             retention_policy=None):
         """
         Write to multiple time series names
-        :param json_body:  list of dictionaries, each dictionary represents a point,
-                            the list of points to be written in the database
+        :param json_body: list of dictionaries,
+                          each dictionary represents a point,
+                          the list of points to be written in the database
         :param time_precision: database time precision, default is second
-        :param database: str,  the database to write the points to. Defaults to the client’s current database
-        :param retention_policy: str, the retention policy for the points. Defaults to None
+        :param database: str, the database to write the points to
+                         Defaults to the client’s current database
+        :param retention_policy: str, the retention policy for the points.
+                                 Defaults to None
         :return: bool
         """
         if self.test_connect():
-            return self.__db.write_points(
-                json_body, time_precision=time_precision,
-                database=database, retention_policy=retention_policy
-            )
+            return self.__db.write_points(json_body,
+                                          time_precision=time_precision,
+                                          database=database,
+                                          retention_policy=retention_policy)
         else:
             return False
 
@@ -370,7 +380,6 @@ class EtcdWrapper:
     """
     Pack etcd library, send data to etcd
     """
-
     def __init__(self, conf):
         self.conf = conf
         self.host, self.port = self.conf['host'], self.conf['port']

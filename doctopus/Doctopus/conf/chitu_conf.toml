@@ -28,8 +28,8 @@ send_to_where = 'TODO'  # chitu将数据发送到哪里，可选值为：influxd
     # 数据库连接参数
     host = '127.0.0.1'
     port = 5432
-    user = ''       # TimescaleDB用户名
-    password = ''   # TimescaleDB密码
+    user = ''               # TimescaleDB用户名
+    password = ''           # TimescaleDB密码
     dbname = 'postgres'     # 要使用的数据库名
         [timescale.table]
             # 预定义schema名、table名（默认是Hypertable）及其timestamp字段名

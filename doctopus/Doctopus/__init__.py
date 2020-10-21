@@ -6,7 +6,7 @@ import os
 import shutil
 import traceback
 
-from conf.version import version_
+from Doctopus.conf.version import version_
 
 
 def main():
@@ -16,19 +16,18 @@ def main():
     """
     parse = argparse.ArgumentParser(
         prog="Doctopus",
-        usage="\ndoctopus project [-h] [-t {ziyan, chitu} ] [-v]"
-    )
+        usage="\ndoctopus project [-h] [-t {ziyan, chitu} ] [-v]")
     parse.add_argument('project', help='project name', nargs='?')
-    parse.add_argument(
-        '-t', '--target',
-        choices=['ziyan', 'chitu'], default='ziyan',
-        help='selelct the target, default ziyan'
-    )
-    parse.add_argument(
-        '-v', '--version',
-        action='version',
-        default=None, version='%(prog)s {}'.format(version_)
-    )
+    parse.add_argument('-t',
+                       '--target',
+                       choices=['ziyan', 'chitu'],
+                       default='ziyan',
+                       help='selelct the target, default ziyan')
+    parse.add_argument('-v',
+                       '--version',
+                       action='version',
+                       default=None,
+                       version='%(prog)s {}'.format(version_))
     project = parse.parse_args().project
     target = parse.parse_args().target
     version = parse.parse_args().version
@@ -86,15 +85,13 @@ def make_ziyan(name):
             for file in glob.glob(filepath + '/plugins/*.py'):
                 base_name = os.path.basename(file)
                 if base_name == 'plugin_prototype.py':
-                    shutil.copyfile(
-                        file, name + '/plugins/' + 'your_plugin.py'
-                    )
+                    shutil.copyfile(file,
+                                    name + '/plugins/' + 'your_plugin.py')
                 else:
                     shutil.copyfile(file, name + '/plugins/' + base_name)
 
-            shutil.copyfile(
-                filepath + '/script/manage.py', name + '/manage.py'
-            )
+            shutil.copyfile(filepath + '/script/manage.py',
+                            name + '/manage.py')
     except Exception:
         traceback.print_exc()
 
@@ -125,8 +122,7 @@ def make_chitu(name):
             for file in glob.glob(filepath + '/conf/chitu_conf.toml'):
                 shutil.copyfile(file, name + '/conf/conf.toml')
 
-            shutil.copyfile(
-                filepath + '/script/manage.py', name + '/manage.py'
-            )
+            shutil.copyfile(filepath + '/script/manage.py',
+                            name + '/manage.py')
     except Exception:
         traceback.print_exc()

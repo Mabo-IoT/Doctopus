@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
-import falcon
-import time
-import requests
 import json
+import time
 
+import falcon
+import requests
 from Doctopus.lib.database_wrapper import RedisWrapper
 
 

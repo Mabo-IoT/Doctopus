@@ -1,10 +1,8 @@
 # -*- coding: utf-8 -*-
 import falcon
-
-from Doctopus.web.data import Status, Reload, Restart, Upload
-from Doctopus.web.data import SeverStatus, NodeStatus
-
 from Doctopus.utils.util import get_conf
+from Doctopus.web.data import (NodeStatus, Reload, Restart, SeverStatus,
+                               Status, Upload)
 
 
 def create_client(conf):

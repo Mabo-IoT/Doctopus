@@ -9,4 +9,4 @@ pip wheel -w, -wheel-dir D:\down\doctopus-master\doctopus
 
 使用：python setup.py bdist生成whl
 
-下一个触发的CI项目：[Link python](https://10.7.0.117:9091/mabo_group/base_application/python) 
+下一个触发的CI项目：[Link python](https://10.7.0.117:9091/mabo_group/base_application/python)

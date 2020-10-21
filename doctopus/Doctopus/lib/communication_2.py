@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
 
-import logging
-import threading
-import gevent
-import os
 import hashlib
+import logging
+import os
 import platform
+import threading
 
+import gevent
 from Doctopus.lib.database_wrapper import RedisWrapper
 from Doctopus.lib.watchdog import WatchDog
 from Doctopus.utils.util import get_conf
@@ -60,10 +60,9 @@ class Communication(object):
         :return:
         """
         if platform.system() == "Windows":
-            gevent.joinall([
-                gevent.spawn(self.handle),
-                gevent.spawn(self.monitor)
-            ])
+            gevent.joinall(
+                [gevent.spawn(self.handle),
+                 gevent.spawn(self.monitor)])
         else:
             gevent.joinall([
                 gevent.spawn(self.handle),

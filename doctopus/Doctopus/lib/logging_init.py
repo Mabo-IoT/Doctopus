@@ -50,10 +50,11 @@ def setup_logging(conf):
             os.makedirs(dir_path)
 
         # 实例化一个 rotate file 的处理器，让日志文件旋转生成
-        fh = logging.handlers.RotatingFileHandler(
-            filename=logfile, mode='a', maxBytes=max_size,
-            backupCount=backup_count, encoding='utf-8'
-        )
+        fh = logging.handlers.RotatingFileHandler(filename=logfile,
+                                                  mode='a',
+                                                  maxBytes=max_size,
+                                                  backupCount=backup_count,
+                                                  encoding='utf-8')
         fh.setLevel(level[file_level])
         fh.setFormatter(formatter)
         log.addHandler(fh)

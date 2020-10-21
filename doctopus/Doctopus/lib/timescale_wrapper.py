@@ -4,7 +4,6 @@
 
 import logging
 import time
-from datetime import datetime
 
 import psycopg2
 import toml
@@ -160,7 +159,7 @@ class TimescaleWrapper(object):
 
         """
         # Build SQL statements
-        col_field = "{time_field_name} TIMESTAMPTZ NOT NULL".format(
+        col_field = "{time_field_name} TIMESTAMP NOT NULL".format(
             time_field_name=self._time_field)
         for col, type_ in cols.items():
             if type_ in ['int', 'float']:
@@ -212,8 +211,8 @@ class TimescaleWrapper(object):
                         }
 
         """
-        col_field = ''      # column field
-        values = ''         # VALUES field
+        col_field = ''  # column field
+        values = ''  # VALUES field
         timestamp = datas.get('timestamp')
         # Build SQL statements
         for col, data in datas.get('fields').items():

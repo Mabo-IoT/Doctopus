@@ -6,7 +6,6 @@ import logging
 import threading
 import time
 
-
 log = logging.getLogger(__name__)
 
 
@@ -61,8 +60,7 @@ class WatchDog(object):
         if not inspect.isclass(exctype):
             exctype = type(exctype)
         res = ctypes.pythonapi.PyThreadState_SetAsyncExc(
-            tid, ctypes.py_object(exctype)
-        )
+            tid, ctypes.py_object(exctype))
         if res == 0:
             log.error("invalid thread id")
         elif res != 1:
@@ -139,13 +137,15 @@ class WatchDog(object):
             instances = self.instance_set
         else:
             instances = [
-                thread for thread in self.instance_set if thread.name in dead_threads
+                thread for thread in self.instance_set
+                if thread.name in dead_threads
             ]
 
         threads_set = dict()
 
         for instance in instances:
-            worker = threading.Thread(target=instance.work, args=(queue,),
+            worker = threading.Thread(target=instance.work,
+                                      args=(queue, ),
                                       name='%s' % instance.name)
             worker.setDaemon(True)
             worker.start()

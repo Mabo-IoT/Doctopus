@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 
 import asyncio
-import logging
-import threading
 import hashlib
+import logging
 import os
 import platform
+import threading
 
 from Doctopus.lib.database_wrapper import RedisWrapper
 from Doctopus.lib.watchdog import WatchDog

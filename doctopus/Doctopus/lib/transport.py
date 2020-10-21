@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 
+import json
 import logging
 import sys
 import time
-import json
 import traceback
 from datetime import datetime
 from queue import Queue
@@ -217,11 +217,9 @@ class Transport:
                     timestamp = datetime.fromtimestamp(ts).strftime(
                         "%Y-%m-%d %H:%M:%S")
 
-                    json_data = {
-                        "timestamp": timestamp,
-                        "fields": fields
-                    }
-                    log.debug('Send the following data to MQTT: {}'.format(json_data))
+                    json_data = {"timestamp": timestamp, "fields": fields}
+                    log.debug('Send the following data to MQTT: {}'.format(
+                        json_data))
                     return json_data
                 except Exception as e:
                     raise e
@@ -266,9 +264,10 @@ class Transport:
                 self.timescale.insertData(data)
                 log.info('Insert data to Timescale: {}.{}.{}'.format(
                     self.timescale_conf.get('dbname'),
-                    self.timescale_conf.get('table', dict()).get('schema_name'),
-                    self.timescale_conf.get('table', dict()).get('table_name')
-                ))
+                    self.timescale_conf.get('table',
+                                            dict()).get('schema_name'),
+                    self.timescale_conf.get('table',
+                                            dict()).get('table_name')))
             except Exception as err:
                 log.error(err)
 
@@ -291,7 +290,8 @@ class Transport:
         """Get pending data from data_stream
 
         return:
-            data: [dict{"id":string, "data":bytes}]; dict{id:string, data:bytes}
+            data: [dict{"id":string, "data":bytes}]
+                  dict{id:string, data:bytes}
         """
         data = self.redis.readPending(self.group, self.consumer, 0)
         res = []

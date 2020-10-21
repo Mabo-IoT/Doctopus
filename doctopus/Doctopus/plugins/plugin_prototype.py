@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
-import time
 import random
+import time
 from logging import getLogger
 
 from Doctopus.Doctopus_main import Check, Handler
@@ -20,8 +20,7 @@ class MyCheck(Check):
         """
         data = [
             random.randint(0, 1),
-            round(random.uniform(21.0, 30.0), 2),
-            "this is a msg"
+            round(random.uniform(21.0, 30.0), 2), "this is a msg"
         ]
         log.debug('%s', data)
         time.sleep(2)

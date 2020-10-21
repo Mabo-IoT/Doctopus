@@ -2,10 +2,10 @@ application = "ziyan"
 
 [user_conf]
     [user_conf.check]
-    # check config
+    # Check() config
 
     [user_conf.handler]
-    # handler config
+    # Handler() config
     table_name = 'test_table'
     field_name_list = ['status', 'temp', 'msg']
     # 's' or 'u'

@@ -28,23 +28,23 @@ send_to_where = 'TODO'  # chitu将数据发送到哪里，可选值为：influxd
     # 数据库连接参数
     host = '127.0.0.1'
     port = 5432
-    user = 'postgres'       # TimescaleDB用户名
-    password = 'postgres'   # TimescaleDB密码
+    user = ''       # TimescaleDB用户名
+    password = ''   # TimescaleDB密码
     dbname = 'postgres'     # 要使用的数据库名
         [timescale.table]
-            # 数据表参数
-            schema_name = 'device_tables'   # 要使用的模式名
-            table_name = 'device_XX_XX'     # 要使用的表名，应该是设备编号，例如：device_AVL_01
-            time_field = 'recordtime'
+            # 预定义schema名、table名（默认是Hypertable）及其timestamp字段名
+            schema_name = 'device_tables'   # schema名
+            table_name = 'device_XX_XX'     # table名，应当是设备编号，例如：device_AVL_01
+            time_field = 'recordtime'       # Hypertable的timestamp字段名
         [timescale.columns]
-            # 数据列参数
+            # 预定义列名（不包括timestamp）及其数据类型
             column1 = 'int'
             column2 = 'float'
             column3 = 'str'
 
 [mqtt]
-    host = '127.0.0.1'
-    port = 1883
+    host = '127.0.0.1'  # MQTT broker服务地址
+    port = 1883         # MQTT broker服务地址
     client_id = ''      # 客户端ID，为空则使用随机值
     keepalive = 60      # 心跳包发送时间间隔
     username = ''

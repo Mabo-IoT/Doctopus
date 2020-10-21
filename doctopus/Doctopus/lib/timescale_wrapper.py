@@ -238,6 +238,7 @@ class TimescaleWrapper(object):
             cursor = self.conn.cursor()
             cursor.execute(SQL, (timestamp, ))
             self.conn.commit()
+            log.debug('Data inserted successfully')
         except (UndefinedTable, UndefinedColumn) as warn:
             log.error('{hint}: {warn_info}'.format(hint='SQL Error',
                                                    warn_info=warn))

@@ -26,7 +26,7 @@ log = logging.getLogger(__name__)
 
 
 class Transport:
-    def __init__(self, conf, redis_address):
+    def __init__(self, conf, redis_address=None):
         self.from_where = conf.get('data_source', 'redis')
         self.to_where = conf['send_to_where']
 
@@ -111,8 +111,8 @@ class Transport:
                 if raw_data:
                     data = json.loads(raw_data.decode())
                     log.debug('Subscribe data: {}'.format(data))
-                    self.send(data)
                     log.debug("Sending data")
+                    self.send(data)
 
     def pending(self, *args):
         while True:

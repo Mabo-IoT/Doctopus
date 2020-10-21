@@ -6,13 +6,14 @@ import os
 import shutil
 import traceback
 
+from conf.version import version_
+
 
 def main():
     """
     Get the project name
     :return: None
     """
-    version = '0.4.7'
     parse = argparse.ArgumentParser(
         prog="Doctopus",
         usage="\ndoctopus project [-h] [-t {ziyan, chitu} ] [-v]"
@@ -26,7 +27,7 @@ def main():
     parse.add_argument(
         '-v', '--version',
         action='version',
-        default=None, version='%(prog)s {}'.format(version)
+        default=None, version='%(prog)s {}'.format(version_)
     )
     project = parse.parse_args().project
     target = parse.parse_args().target
@@ -68,6 +69,10 @@ def make_ziyan(name):
             os.mkdir(name + '/lua')
             os.mkdir(name + '/plugins')
             filepath = os.path.split(os.path.realpath(__file__))[0]
+
+            # copy version files
+            for file in glob.glob(filepath + '/conf/version.py'):
+                shutil.copyfile(file, name + '/conf/version.py')
 
             # copy conf files
             for file in glob.glob(filepath + '/conf/ziyan_conf.toml'):
@@ -111,6 +116,10 @@ def make_chitu(name):
         if not os.path.exists(name):
             os.makedirs(name + '/conf')
             filepath = os.path.split(os.path.realpath(__file__))[0]
+
+            # copy version files
+            for file in glob.glob(filepath + '/conf/version.py'):
+                shutil.copyfile(file, name + '/conf/version.py')
 
             # copy conf files
             for file in glob.glob(filepath + '/conf/chitu_conf.toml'):

@@ -11,12 +11,12 @@ LastEditTime: 2020-04-28 16:51:37
 from setuptools import setup, find_packages
 import sys
 
-version = '0.4.7'
+from Doctopus.conf.version import version_
 
 if sys.version_info[0] == 3 and sys.version_info[1] >= 5:
     setup(
         name='Doctopus',
-        version=version,
+        version=version_,
         author='',
         author_email='',
         description='A distributed data collector',
@@ -37,7 +37,7 @@ if sys.version_info[0] == 3 and sys.version_info[1] >= 5:
 else:
     setup(
         name='Doctopus',
-        version=version,
+        version=version_,
         author='',
         author_email='',
         description='A distributed data collector',

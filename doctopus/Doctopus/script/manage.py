@@ -8,6 +8,8 @@ import sys
 
 from Doctopus.web.app import get_app
 
+from conf.version import version_
+
 try:
     from queue import Queue
 except Exception:
@@ -155,7 +157,6 @@ def start_chitu():
 
 
 if __name__ == '__main__':
-    version = '0.4.7'
     parse = argparse.ArgumentParser(
         prog='Doctopus',
         description='A distributed data collector.',
@@ -170,7 +171,7 @@ if __name__ == '__main__':
     parse.add_argument(
         '-v', '--version',
         action='version', default=None,
-        version='%(prog)s {}'.format(version)
+        version='%(prog)s {}'.format(version_)
     )
     parse.add_argument(
         '-t', '--target',

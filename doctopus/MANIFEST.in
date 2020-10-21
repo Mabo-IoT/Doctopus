@@ -1,2 +1,2 @@
-recursive-include Doctopus/conf *.lua *.toml
+recursive-include Doctopus/conf *.lua *.toml version.py
 recursive-include Doctopus/confd *

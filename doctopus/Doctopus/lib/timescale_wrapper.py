@@ -294,41 +294,24 @@ if __name__ == "__main__":
     conf = toml.load(confile)['timescale']
     client = TimescaleWrapper(conf)
 
-    schema = 'device_tables'
-    table = 'test'
-    hypertable = 'device_XX_XX'
-    cols = {'x': 'int', 'y': 'str', 'z': 'float', 'a': 'int'}
-
-    # Test _createTable
-    client._createTable(schema=schema, table=table, cols=cols)
-
     # Test insertData
     datas = {
-        'column1': {
-            'name': 'column1',
-            'title': '速度',
-            'value': 100,
-            'unit': 'km/h'
-        },
-        'column2': {
-            'name': 'column2',
-            'title': '牵引力',
-            'value': 200,
-            'unit': 'N'
-        },
-        'column3': {
-            'name': 'column3',
-            'title': '功率',
-            'value': 300,
-            'unit': 'Kw'
-        }
-    }
+                'timestamp': '2020-10-21 10:19:11',
+                'fields': {
+                    'v': {
+                        'name': 'v',
+                        'title': '速度',
+                        'value': 65.7,
+                        'unit': 'km/h'
+                    }
+                }
+            }
     client.insertData(datas=datas)
 
     # Test insertData
-    result = client.queryData(schema=schema,
-                              table=hypertable,
-                              order='recordtime',
+    result = client.queryData(schema=conf['table'].get('schema_name'),
+                              table=conf['table'].get('table_name'),
+                              order=conf['table'].get('time_field'),
                               limit=2)
     print(result)
 

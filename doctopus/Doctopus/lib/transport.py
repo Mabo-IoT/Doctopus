@@ -74,9 +74,8 @@ class Transport:
             if self.from_where == 'redis':
                 # get and decompress data
                 try:
-                    raw_data = self.getData()
-                    log.debug(raw_data)
-                    raw_data = self.unpack(raw_data)
+                    bin_data = self.getData()
+                    raw_data = self.unpack(bin_data)
                     log.debug(raw_data)
                 except exceptions.ResponseError as e:
                     # NOGROUP for data_stream, recreate it.

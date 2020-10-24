@@ -37,10 +37,10 @@ send_to_where = 'TODO'      # chitu将数据发送到哪里，可选值为：inf
             table_name = 'device_XX_XX'     # table名，应当是设备编号，例如：device_AVL_01
             time_field = 'recordtime'       # Hypertable的timestamp字段名
         [timescale.columns]
-            # 预定义列名（不包括timestamp）及其数据类型
-            column1 = 'int'
-            column2 = 'float'
-            column3 = 'str'
+            # 预定义列名（不包括timestamp）及其数据类型（int、float或str）
+            v = 'int'
+            temp = 'float'
+            text = 'str'
 
 [mqtt]
     host = '127.0.0.1'  # MQTT broker服务地址

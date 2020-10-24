@@ -159,8 +159,9 @@ class TimescaleWrapper(object):
 
         """
         # Build SQL statements
-        col_field = "{time_field_name} TIMESTAMP NOT NULL".format(
-            time_field_name=self._time_field)
+        col_field = ("{time_field_name} TIMESTAMP NOT NULL, "
+                     "{id_col} VARCHAR NOT NULL").format(
+                         time_field_name=self._time_field, id_col='deviceid')
         for col, type_ in cols.items():
             if type_ in ['int', 'float']:
                 col_field = '{curr_col}, {new_col} {attr_1} {attr_2}'.format(
@@ -213,7 +214,7 @@ class TimescaleWrapper(object):
         """
         col_field = ''  # column field
         values = ''  # VALUES field
-        timestamp = datas.get('timestamp')
+        timestamp = "'{}'".format(datas.get('timestamp'))  # 需要是带有单引号的字符串
         # Build SQL statements
         for col, data in datas.get('fields').items():
             if not str(data['value']):
@@ -222,20 +223,28 @@ class TimescaleWrapper(object):
             else:
                 col_field = '{curr_col}, {new_col}'.format(
                     curr_col=col_field, new_col=col).strip(',')
+                # 处理str类型的值，SQL语句中str类型需要有单引号
+                if isinstance(data['value'], str):
+                    value = "'{}'".format(data['value'])
+                else:
+                    value = data['value']
                 values = '{curr_value}, {new_value}'.format(
-                    curr_value=values, new_value=data['value']).strip(',')
+                    curr_value=values, new_value=value).strip(',')
         SQL = ("INSERT INTO {schema_name}.{table_name} "
-               "({time_field_name}, {columns}) "
-               "VALUES (%s, {values})").format(
+               "({time_field_name}, {id_col}, {columns}) "
+               "VALUES ({timestamp}, {id_value}, {value})").format(
                    schema_name=self._schema_name,
                    table_name=self._table_name,
                    time_field_name=self._time_field,
+                   id_col='deviceid',
+                   id_value="'{}'".format(self._table_name),
                    columns=col_field,
-                   values=values)
+                   timestamp=timestamp,
+                   value=values)
         # Execute SQL statements
         try:
             cursor = self.conn.cursor()
-            cursor.execute(SQL, (timestamp, ))
+            cursor.execute(SQL)
             self.conn.commit()
             log.debug('Data inserted successfully')
         except (UndefinedTable, UndefinedColumn) as warn:
@@ -296,16 +305,28 @@ if __name__ == "__main__":
 
     # Test insertData
     datas = {
-                'timestamp': '2020-10-21 10:19:11',
-                'fields': {
-                    'v': {
-                        'name': 'v',
-                        'title': '速度',
-                        'value': 65.7,
-                        'unit': 'km/h'
-                    }
-                }
+        'timestamp': '2020-10-21 10:19:11',
+        'fields': {
+            'v': {
+                'name': 'v',
+                'title': '速度',
+                'value': 65.7,
+                'unit': 'km/h'
+            },
+            'temp': {
+                'name': 'temp',
+                'title': '温度',
+                'value': 30.2,
+                'unit': '°C'
+            },
+            'text': {
+                'name': 'text',
+                'title': '文本',
+                'value': '编号',
+                'unit': ''
             }
+        }
+    }
     client.insertData(datas=datas)
 
     # Test insertData
@@ -313,7 +334,7 @@ if __name__ == "__main__":
                               table=conf['table'].get('table_name'),
                               order=conf['table'].get('time_field'),
                               limit=2)
-    print(result)
+    print('{}\n'.format(result))
 
     # Test use4test
     while 1:

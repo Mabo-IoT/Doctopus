@@ -1,7 +1,7 @@
 application = 'chitu'
 
 data_source = 'redis'       # chitu从哪里获取数据，可选值为：redis, mqtt
-send_to_where = 'TODO'      # chitu将数据发送到哪里，可选值为：influxdb, kafka, mqtt, timescale
+send_to_where = 'TODO'      # chitu将数据发送到哪里，可选值为：influxdb, kafka, mqtt
 
 [data_stream]
     group = 'test_group'
@@ -23,24 +23,6 @@ send_to_where = 'TODO'      # chitu将数据发送到哪里，可选值为：inf
     port = 6379
     # which db your data reside in ?
     db = 1
-
-[timescale]
-    # 数据库连接参数
-    host = '127.0.0.1'
-    port = 5432
-    user = ''               # TimescaleDB用户名
-    password = ''           # TimescaleDB密码
-    dbname = 'postgres'     # 要使用的数据库名
-        [timescale.table]
-            # 预定义schema名、table名（默认是Hypertable）及其timestamp字段名
-            schema_name = 'device_tables'   # schema名
-            table_name = 'device_XX_XX'     # table名，应当是设备编号，例如：device_AVL_01
-            time_field = 'recordtime'       # Hypertable的timestamp字段名
-        [timescale.columns]
-            # 预定义列名（不包括timestamp）及其数据类型（int、float或str）
-            v = 'int'
-            temp = 'float'
-            text = 'str'
 
 [mqtt]
     host = '127.0.0.1'  # MQTT broker服务地址

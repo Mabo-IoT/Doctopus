@@ -19,7 +19,6 @@ else:
 from Doctopus.lib.database_wrapper import InfluxdbWrapper, RedisWrapper
 from Doctopus.lib.kafka_wrapper import KafkaWrapper
 from Doctopus.lib.mqtt_wrapper import MqttWrapper
-from Doctopus.lib.timescale_wrapper import TimescaleWrapper
 from Doctopus.utils.util import get_conf
 
 log = logging.getLogger(__name__)
@@ -52,11 +51,6 @@ class Transport:
             self.mqtt_conf = conf.get('mqtt', dict())
             self.mqtt_put_queue = Queue()
             self.mqtt = MqttWrapper(self.mqtt_conf)
-        elif self.to_where == 'timescale':
-            self.mqtt_conf = conf.get('mqtt', dict())
-            self.mqtt = MqttWrapper(self.mqtt_conf)
-            self.timescale_conf = conf.get('timescale', dict())
-            self.timescale = TimescaleWrapper(self.timescale_conf)
 
     def initKafka(self, conf):
         while True:
@@ -207,6 +201,7 @@ class Transport:
                     log.error(e)
             elif self.to_where == 'mqtt':
                 try:
+                    device_id = data['fields']['tags'].get('eqpt_no')
                     data['fields'].pop('tags', None)
                     data['fields'].pop('unit', None)
                     data.pop('table_name', None)
@@ -216,7 +211,11 @@ class Transport:
                     timestamp = datetime.fromtimestamp(ts).strftime(
                         "%Y-%m-%d %H:%M:%S")
 
-                    json_data = {"timestamp": timestamp, "fields": fields}
+                    json_data = {
+                        "deviceid": device_id,
+                        "timestamp": timestamp,
+                        "fields": fields
+                    }
                     log.debug('Send the following data to MQTT: {}'.format(
                         json_data))
                     return json_data
@@ -256,17 +255,6 @@ class Transport:
                 self.mqtt.pubMessage(self.mqtt_put_queue)
                 log.info('Publish data to MQTT topics: {}'.format(
                     self.mqtt_conf.get('topics', list())))
-            except Exception as err:
-                log.error(err)
-        elif self.to_where == 'timescale':
-            try:
-                self.timescale.insertData(data)
-                log.info('Insert data to Timescale: {}.{}.{}'.format(
-                    self.timescale_conf.get('dbname'),
-                    self.timescale_conf.get('table',
-                                            dict()).get('schema_name'),
-                    self.timescale_conf.get('table',
-                                            dict()).get('table_name')))
             except Exception as err:
                 log.error(err)
 
@@ -324,7 +312,4 @@ class Transport:
             self.mqtt_conf = conf.get('mqtt', dict())
             self.mqtt = MqttWrapper(self.mqtt_conf)
             self.mqtt_put_queue = Queue()
-        elif self.to_where == 'timescale':
-            self.timescale_conf = conf.get('timescale', dict())
-            self.timescale = TimescaleWrapper(self.timescale_conf)
         return self

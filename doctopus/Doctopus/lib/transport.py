@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 
-import json
 import logging
 import sys
 import time
@@ -26,7 +25,6 @@ log = logging.getLogger(__name__)
 
 class Transport:
     def __init__(self, conf, redis_address=None):
-        self.from_where = conf.get('data_source', 'redis')
         self.to_where = conf['send_to_where']
 
         self.data_original = None
@@ -34,14 +32,11 @@ class Transport:
         self.communication = Communication(conf)
 
         # Redis conf
-        if self.from_where == 'redis':
-            self.redis = RedisWrapper(redis_address)
-            self.group = conf['data_stream']['group']
-            self.consumer = conf['data_stream']['consumer']
-            # create group for data_stream
-            self.redis.addGroup(self.group)
-        else:
-            pass
+        self.redis = RedisWrapper(redis_address)
+        self.group = conf['data_stream']['group']
+        self.consumer = conf['data_stream']['consumer']
+        # create group for data_stream
+        self.redis.addGroup(self.group)
 
         if self.to_where == 'influxdb':
             self.db = InfluxdbWrapper(conf['influxdb'])
@@ -65,47 +60,34 @@ class Transport:
 
     def work(self, *args):
         while True:
-            if self.from_where == 'redis':
-                # get and decompress data
+            # get and decompress data
+            try:
+                bin_data = self.getData()
+                raw_data = self.unpack(bin_data)
+                log.debug(raw_data)
+            except exceptions.ResponseError as e:
+                # NOGROUP for data_stream, recreate it.
+                if "NOGROUP" in str(e):
+                    log.error(
+                        str(e) + " Recreate group '{}'".format(self.group))
+                    self.redis.addGroup(self.group)
+                raw_data = None
+            except Exception as e:
+                log.error(e)
+                raw_data = None
+
+            # compress and send data
+            if raw_data:
+                data = self.pack(raw_data["data"])
                 try:
-                    bin_data = self.getData()
-                    raw_data = self.unpack(bin_data)
-                    log.debug(raw_data)
-                except exceptions.ResponseError as e:
-                    # NOGROUP for data_stream, recreate it.
-                    if "NOGROUP" in str(e):
-                        log.error(
-                            str(e) + " Recreate group '{}'".format(self.group))
-                        self.redis.addGroup(self.group)
-                    raw_data = None
-                except Exception as e:
-                    log.error(e)
-                    raw_data = None
-
-                # compress and send data
-                if raw_data:
-                    data = self.pack(raw_data["data"])
-                    try:
-                        # send data and ack data id
-                        log.debug("send data")
-                        self.send(data)
-                        log.debug("redis ack data")
-                        self.redis.ack(self.group, raw_data["id"])
-                    except Exception as e:
-                        log.error("\n%s", e)
-                        time.sleep(3)
-
-            elif self.from_where == 'mqtt':
-                # get and decompress data
-                self.mqtt.subMessage()
-                raw_data = self.mqtt.sub_queue.get()
-
-                # compress and send data
-                if raw_data:
-                    data = json.loads(raw_data.decode())
-                    log.debug('Subscribe data: {}'.format(data))
-                    log.debug("Sending data")
+                    # send data and ack data id
+                    log.debug("send data")
                     self.send(data)
+                    log.debug("redis ack data")
+                    self.redis.ack(self.group, raw_data["id"])
+                except Exception as e:
+                    log.error("\n%s", e)
+                    time.sleep(3)
 
     def pending(self, *args):
         while True:
@@ -201,7 +183,7 @@ class Transport:
                     log.error(e)
             elif self.to_where == 'mqtt':
                 try:
-                    device_id = data['fields']['tags'].get('eqpt_no')
+                    schema, table = data.get('table_name').split('.')
                     data['fields'].pop('tags', None)
                     data['fields'].pop('unit', None)
                     data.pop('table_name', None)
@@ -212,8 +194,10 @@ class Transport:
                         "%Y-%m-%d %H:%M:%S")
 
                     json_data = {
-                        "deviceid": device_id,
                         "timestamp": timestamp,
+                        "schema": schema,
+                        "table": table,
+                        "deviceid": table,
                         "fields": fields
                     }
                     log.debug('Send the following data to MQTT: {}'.format(
@@ -299,7 +283,6 @@ class Transport:
 
     def re_load(self):
         conf = get_conf()
-        self.from_where = conf.get('data_source', 'redis')
         self.to_where = conf['send_to_where']
         self.data_original = None
         self.name = None

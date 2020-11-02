@@ -1,6 +1,5 @@
 application = 'chitu'
 
-data_source = 'redis'       # chitu从哪里获取数据，可选值为：redis, mqtt
 send_to_where = 'TODO'      # chitu将数据发送到哪里，可选值为：influxdb, kafka, mqtt
 
 [data_stream]

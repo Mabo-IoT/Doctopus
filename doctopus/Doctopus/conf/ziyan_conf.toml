@@ -6,10 +6,10 @@ application = "ziyan"
 
     [user_conf.handler]
     # Handler() config
-    table_name = 'test_table'
+    table_name = 'test_table'   # 如果最终要持久化到TimescaleDB里，则格式为'Schema.Table'
     field_name_list = ['status', 'temp', 'msg']
     # 's' or 'u'
-    unit = 's'
+    unit = 's'  # 如果最终要持久化到TimescaleDB里，则unit的值必须是's'
 
         [user_conf.handler.tags]
         eqpt_no = 'DEV0-1000'

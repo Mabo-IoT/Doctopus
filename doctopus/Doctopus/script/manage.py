@@ -88,9 +88,6 @@ def start_chitu():
     # load all configs
     all_conf = get_conf('conf/conf.toml')
 
-    # data source (redis or mqtt)
-    from_where = all_conf['data_source']
-
     # init log config
     setup_logging(all_conf['log_configuration'])
 
@@ -98,35 +95,24 @@ def start_chitu():
     queue = None
     workers = list()
 
-    if from_where == 'redis':
-        # start redis and redis_pending instance
-        for redis_address in all_conf['redis_instance']['address']:
-            work = Transport(all_conf, redis_address)
-            work.name = 'redis_' + str(redis_address['db'])
-            thread = Thread(target=work.work, args=(), name='%s' % work.name)
-            thread.setDaemon(True)
-            thread.start()
-            workers.append(work)
-            thread_set[work.name] = thread
-
-            # start pending data process
-            pending = Transport(all_conf, redis_address)
-            pending.name = 'redis_pending_' + str(redis_address['db'])
-            thread = Thread(target=pending.pending,
-                            args=(),
-                            name='%s' % pending.name)
-            thread.start()
-            workers.append(pending)
-            thread_set[pending.name] = thread
-    elif from_where == 'mqtt':
-        # start mqtt instance
-        work = Transport(all_conf)
-        work.name = 'mqtt'
+    for redis_address in all_conf['redis_instance']['address']:
+        work = Transport(all_conf, redis_address)
+        work.name = 'redis_' + str(redis_address['db'])
         thread = Thread(target=work.work, args=(), name='%s' % work.name)
         thread.setDaemon(True)
         thread.start()
         workers.append(work)
         thread_set[work.name] = thread
+
+        # start pending data process
+        pending = Transport(all_conf, redis_address)
+        pending.name = 'redis_pending_' + str(redis_address['db'])
+        thread = Thread(target=pending.pending,
+                        args=(),
+                        name='%s' % pending.name)
+        thread.start()
+        workers.append(pending)
+        thread_set[pending.name] = thread
 
     # start communication instance
     communication = Communication(all_conf)
@@ -193,14 +179,7 @@ if __name__ == '__main__':
 
         if target == 'chitu':
             start_chitu()
-            # load all configs
-            all_conf = get_conf('conf/conf.toml')
-            # data source (redis or mqtt)
-            from_where = all_conf['data_source']
-            if from_where == 'redis':
-                port = port if port != '8000' else str(int(port) + 1)
-            else:
-                port = port if port != '8000' else str(int(port) + 2)
+            port = port if port != '8000' else str(int(port) + 1)
 
         log.info("Serving on http://%s:%s", host, port)
         waitress.serve(get_app(), host=host, port=port, _quiet=True)

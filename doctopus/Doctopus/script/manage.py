@@ -181,7 +181,7 @@ if __name__ == '__main__':
             start_chitu()
             port = port if port != '8000' else str(int(port) + 1)
 
-        log.info("Serving on http://%s:%s", host, port)
+        log.info("Serving on http://{}:{}".format(host, port))
         waitress.serve(get_app(), host=host, port=port, _quiet=True)
 
     elif command == 'test':

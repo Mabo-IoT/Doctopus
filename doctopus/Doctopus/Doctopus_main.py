@@ -75,7 +75,7 @@ class Handler(object):
                 self.enque_prepare(processed_dicts)
 
             else:
-                log.error('\nNo data is received')
+                log.error('No data is received.')
 
     def enque_prepare(self, processed_dicts):
         """

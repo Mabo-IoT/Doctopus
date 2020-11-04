@@ -12,6 +12,7 @@ local MAXLEN = 100000
 
 -- 'new_timestamp'和'old_timestamp'之间差的时间（单位秒）
 local time_range = 10
+-- mark_range必须是time_range的整数倍
 local mark_range = 300
 -- 'new_fields'中'unit'的值是'u'（微秒）时，x1000000才能正确计算'new_timetamp'和'old_timestamp'的差值
 if cmsgpack.unpack(new_fields)['unit'] == 'u' then

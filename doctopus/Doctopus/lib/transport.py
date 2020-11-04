@@ -53,10 +53,10 @@ class Transport:
                 client = KafkaWrapper(conf)
                 return client
 
-            except Exception as e:
-                log.error(e)
+            except Exception as err:
+                log.error(err)
+                log.error("Can't init Kafka client, try again...")
                 time.sleep(1)
-                log.error("can't init kafka client, try again!")
 
     def work(self, *args):
         while True:
@@ -64,16 +64,16 @@ class Transport:
             try:
                 bin_data = self.getData()
                 raw_data = self.unpack(bin_data)
-                log.debug(raw_data)
+                log.debug('Data from redis: {}'.format(raw_data))
             except exceptions.ResponseError as e:
                 # NOGROUP for data_stream, recreate it.
                 if "NOGROUP" in str(e):
-                    log.error(
-                        str(e) + " Recreate group '{}'".format(self.group))
+                    log.error('{}, recreate group: {}'.format(
+                        str(e), self.group))
                     self.redis.addGroup(self.group)
                 raw_data = None
-            except Exception as e:
-                log.error(e)
+            except Exception as err:
+                log.error(err)
                 raw_data = None
 
             # compress and send data
@@ -81,12 +81,12 @@ class Transport:
                 data = self.pack(raw_data["data"])
                 try:
                     # send data and ack data id
-                    log.debug("send data")
+                    log.debug("Send data to {}.".format(self.to_where))
                     self.send(data)
-                    log.debug("redis ack data")
+                    log.debug("Redis ack data.")
                     self.redis.ack(self.group, raw_data["id"])
-                except Exception as e:
-                    log.error("\n%s", e)
+                except Exception as err:
+                    log.error(err)
                     time.sleep(3)
 
     def pending(self, *args):
@@ -94,14 +94,14 @@ class Transport:
             try:
                 pending_data = self.getPendingData()
 
-            except exceptions.ResponseError as e:
+            except exceptions.ResponseError as err:
                 # NOGROUP for data_stream, recreate it.
-                if "NOGROUP" in str(e):
-                    log.error(e)
+                if "NOGROUP" in str(err):
+                    log.error(err)
                     self.redis.addGroup(self.group)
                 pending_data = []
-            except Exception as e:
-                log.error(e)
+            except Exception as err:
+                log.error(err)
                 pending_data = []
 
             if pending_data:
@@ -111,17 +111,17 @@ class Transport:
                         data = self.pack(raw_data["data"])
                         try:
                             # send data and ack data id
-                            log.debug("send pending data")
+                            log.debug("Send pending data to {}".format(
+                                self.to_where))
                             self.send(data)
-                            log.debug("redis ack pending data")
+                            log.debug("Redis ack pending data.")
                             self.redis.ack(self.group, raw_data["id"])
-                            log.info("send pending_data ~")
-                        except Exception as e:
-                            log.error("\n%s", e)
+                        except Exception as err:
+                            log.error(err)
                             time.sleep(3)
             else:
                 time.sleep(5)
-                log.debug("no pending data~")
+                log.debug("No pending data.")
 
     def unpack(self, data):
         """
@@ -139,11 +139,11 @@ class Transport:
                     raw_data[k.decode('utf-8')] = msgpack.unpackb(
                         v, encoding='utf-8')
                 data["data"] = raw_data
-            except Exception as e:
+            except Exception as err:
                 traceback.print_exc()
-                log.error("\n%s", e)
+                log.error(err)
         else:
-            log.info('redis have no new data')
+            log.info('Redis have no new data.')
             time.sleep(5)
         return data
 
@@ -172,15 +172,15 @@ class Transport:
                         'unit': unit
                     }]
                     return json_data
-                except Exception as e:
-                    log.error("\n%s", e)
+                except Exception as err:
+                    log.error(err)
             elif self.to_where == 'kafka':
                 try:
                     json_data = self.db.pack(data)
                     return json_data
-                except Exception as e:
+                except Exception as err:
                     traceback.print_exc()
-                    log.error(e)
+                    log.error(err)
             elif self.to_where == 'mqtt':
                 try:
                     schema, table = data.get('table_name').split('.')
@@ -200,11 +200,9 @@ class Transport:
                         "deviceid": table,
                         "fields": fields
                     }
-                    log.debug('Send the following data to MQTT: {}'.format(
-                        json_data))
                     return json_data
-                except Exception as e:
-                    raise e
+                except Exception as err:
+                    raise err
             else:
                 data['fields'].pop('tags')
                 data['fields'].pop('unit')
@@ -220,16 +218,16 @@ class Transport:
             info = self.db.send(data, time_precision)
             self.communication.data[data[0]["measurement"]] = data
             if info:
-                log.info('send data to inflxudb.{}, {}'.format(
+                log.info('Send data to inflxudb.{}, {}'.format(
                     data[0]['measurement'], info))
             else:
                 raise Exception("\nCan't connect influxdb")
 
         elif self.to_where == 'kafka':
             try:
-                log.debug("stuck here in send kafka data")
+                log.debug("Stuck here in send kafka data.")
                 self.db.sendMessage(data)
-                log.info('send data to kafka {}'.format(
+                log.info('Send data to kafka: {}'.format(
                     data["dims"]["data_name"]))
             except Exception as e:
                 raise e
@@ -237,8 +235,8 @@ class Transport:
             self.mqtt_put_queue.put(data)
             try:
                 self.mqtt.pubMessage(self.mqtt_put_queue)
-                log.info('Publish data to MQTT topics: {}'.format(
-                    self.mqtt_conf.get('topics', list())))
+                log.info('Publish data to MQTT topics({}): {}'.format(
+                    self.mqtt_conf.get('topics', list()), data))
             except Exception as err:
                 log.error(err)
 

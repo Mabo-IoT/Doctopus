@@ -22,7 +22,7 @@ class MyCheck(Check):
             random.randint(0, 1),
             round(random.uniform(21.0, 30.0), 2), "this is a msg"
         ]
-        log.debug('%s', data)
+        log.debug('Data collected by the plugin: {}'.format(data))
         time.sleep(2)
         yield data
 
@@ -59,7 +59,6 @@ class MyHandler(Handler):
         """
         # exmple.
         # 数据经过处理之后生成 value_list
-        log.debug('%s', raw_data)
         data_value_list = raw_data
 
         # user 可以在handle里自己按数据格式制定tags

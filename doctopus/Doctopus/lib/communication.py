@@ -97,8 +97,8 @@ class Communication(object):
         try:
             if self.redis.get_len("order_name") > 0:
                 return self.redis.dequeue("order_name")
-        except Exception as e:
-            log.error("\n%s", e)
+        except Exception as err:
+            log.error(err)
 
     def write_into_local(self):
         """
@@ -123,8 +123,8 @@ class Communication(object):
         try:
             self.redis.sadd('status', status)
             self.redis.expire('status', 60 * 5)
-        except Exception as e:
-            log.error("\n%s", e)
+        except Exception as err:
+            log.error(err)
 
     def flush_data(self):
         """

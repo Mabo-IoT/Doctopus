@@ -86,9 +86,9 @@ class Sender(object):
             lua_info = self.db.enqueue(table_name=table_name,
                                        fields=fields,
                                        timestamp=timestamp)
-            log.info('\n' + lua_info.decode())
-        except Exception as e:
-            log.error("\n%s", e)
+            log.info(lua_info.decode())
+        except Exception as err:
+            log.error(err)
 
     def send_to_communication(self, data):
         """

@@ -43,8 +43,8 @@ class RedisWrapper:
             try:
                 self.__db.ping()
                 return True
-            except Exception as e:
-                log.error('\n%s', e)
+            except Exception as err:
+                log.error('Failed to connect to Redis: {}'.format(err))
                 time.sleep(2)
                 continue
 
@@ -69,14 +69,14 @@ class RedisWrapper:
             # if not exists data_stream, make a data_stream
             self.__db.xgroup_create("data_stream", group_name, mkstream=True)
             self.__db.xtrim("data_stream", MAXLEN)
-        except exceptions.ResponseError as e:
+        except exceptions.ResponseError as err:
             # 1. exist group , no need panic
-            if "already exists" in str(e):
+            if "already exists" in str(err):
                 log.info("Already exists group {} for data stream".format(
                     group_name))
-        except Exception as e:
-            log.error(e)
-            raise e
+        except Exception as err:
+            log.error(err)
+            raise err
 
     def readGroup(self, group_name, consumer):
         """
@@ -311,7 +311,6 @@ class InfluxdbWrapper:
             self.conf = kwargs
 
         else:
-            # log.error('No influxdb address')
             pass
 
         # 测试 influxdb 连通性
@@ -327,11 +326,11 @@ class InfluxdbWrapper:
             try:
                 self.query("show measurements limit 1")
                 return True
-            except Exception as e:
+            except Exception as err:
                 i += 1
                 if i > 10:
                     return False
-                log.error("\n%s", e)
+                log.error('Failed to connect to InfluxDB: {}'.format(err))
                 time.sleep(2)
 
     def send(self,
@@ -395,29 +394,28 @@ class EtcdWrapper:
         try:
             data = requests.get(url)
             if data.status_code == 200:
-                log.info("etcd client init ok!")
+                log.info("Etcd client init ok!")
                 return True
             else:
                 return False
-        except Exception as e:
-            log.error("\n%s", e)
-            log.info("Check etcd server or network")
+        except Exception as err:
+            log.error('Failed to connect to Etcd: {}'.format(err))
             return False
 
     def write(self, key, value):
         try:
             self.client.write(key, value)
-        except Exception as e:
-            log.error("\n%s", e)
+        except Exception as err:
+            log.error('{}'.format(err))
 
     def read(self, key, value):
         try:
             return self.client.read(key)
-        except Exception as e:
-            log.error("\n%s", e)
+        except Exception as err:
+            log.error('{}'.format(err))
 
     def delete(self, key):
         try:
             return self.client.delete(key)
-        except Exception as e:
-            log.error("\n%s", e)
+        except Exception as err:
+            log.error('{}'.format(err))

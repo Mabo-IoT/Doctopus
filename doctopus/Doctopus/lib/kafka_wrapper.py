@@ -38,11 +38,11 @@ class KafkaWrapper:
         send msg to kafka brokers
         """
         try:
-            log.debug("send data to topic {}".format(self.topic))
+            log.debug("Send data to topic {}".format(self.topic))
             future = self.producer.send(self.topic, msg)
             # use future get to ensure msg was sent successfully
             # or raise exception
-            log.debug("get kafka future")
+            log.debug("Get kafka future.")
             future.get(timeout=10)
         except Exception as e:
             raise e

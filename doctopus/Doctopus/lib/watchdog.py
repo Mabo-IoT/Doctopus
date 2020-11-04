@@ -62,12 +62,12 @@ class WatchDog(object):
         res = ctypes.pythonapi.PyThreadState_SetAsyncExc(
             tid, ctypes.py_object(exctype))
         if res == 0:
-            log.error("invalid thread id")
+            log.error("Invalid thread id.")
         elif res != 1:
             """if it returns a number greater than one, you're in trouble,
             and you should call it again with exc=NULL to revert the effect"""
             ctypes.pythonapi.PyThreadState_SetAsyncExc(tid, None)
-            log.error("PyThreadState_SetAsyncExc failed")
+            log.error("PyThreadState_SetAsyncExc failed.")
 
     def work(self, *args):
         """
@@ -86,7 +86,7 @@ class WatchDog(object):
             for item in threading.enumerate():
                 thread_real_time_names.add(item.name)
 
-            log.info("\n%s", thread_real_time_names)
+            log.info(thread_real_time_names)
 
             self.thread_real_time_names = thread_real_time_names
 
@@ -95,11 +95,11 @@ class WatchDog(object):
             if different != thread_names:
                 dead_threads = thread_names - different
                 self.re_start(dead_threads, queue)
-                log.info("restart done")
+                log.info("Restart done.")
 
             if self.reload or self.restart:
                 self.kill(self.thread_set)
-                log.info("kill done")
+                log.info("Kill done.")
 
             time.sleep(10)
 

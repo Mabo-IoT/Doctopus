@@ -1,112 +1,165 @@
--- Creator: Marshall Fate
--- editor: driftluo
--- CreateTime: 2016/11/26 16:56
--- EditTime: 2017/06/07
+-- 该Lua脚本用于对入redis的数据进行去重等处理，最少满足如下条件之一的数据允许存储到redis：
+-- 1. 'new_fields'和'old_fields'（指redis的键'threshold*'里的'old_fields'的值）之间是不同的
+-- 2. ‘new_timestamp’和‘old_timestamp'之间差了'time_range'秒以上
+-- 并且会每隔mark_range发送两条心跳信息
 
---this lua script is used for redis enque action with two conditions:
---1. fields is diffrent with former fields which refers to old_fields in key threshold of redis
---2. the difference between timestamp and old timestamp(in the key threshold of redis)
---   is longer than the time range (user specified), as a heart beat.
---The data can be enque at least one of above condition met, or just drop it.^_^
+local new_table_name = KEYS[1]
+local new_fields = ARGV[1]
+local new_timestamp = ARGV[2]
 
---  keys[1]  table_name
---  args[1]  fields
---  args[2]  timestamp
---set parameters:
---how much seconds you want your time range is ???
-local time_range = 10
-local table_name = KEYS[1]
-local fields = ARGV[1]
-local timestamp = ARGV[2]
+-- Stream的最大尺寸
 local MAXLEN = 100000
 
--- FUNCTION PART----------------------------------------------------------------------
-local function set_threshold(threshold_name, timestamp)
+-- 'new_timestamp'和'old_timestamp'之间差的时间（单位秒）
+local time_range = 10
+local mark_range = 300
+-- 'new_fields'中'unit'的值是'u'（微秒）时，x1000000才能正确计算'new_timetamp'和'old_timestamp'的差值
+if cmsgpack.unpack(new_fields)['unit'] == 'u' then
+    time_range = time_range * 1000000
+    mark_range = mark_range * 1000000
+end
+
+
+-------------------- FUNCTION PART --------------------
+local function set_threshold(threshold_name, fields, timestamp)
+    -- 刷新'threshold*'键（Hash类型），存储'fields'和'timestamp'用以校验数据
+    -- parameters:
+    --   threshold_name      'threshold*'键的具体名字
+    --   fields              写入redis的数据
+    --   timestamp           时间戳，string类型
+
     redis.call('HSET', threshold_name, 'fields', fields)
     redis.call('HSET', threshold_name, 'timestamp', timestamp)
 end
 
-local function threshold(fields, timestamp, time_range)
-    --    parameters:
-    --      fields      table influx json fields.
-    --      timestamp   string timestamp
-    --      return f_flag,t_flag  boolean
-    --    f_flag get True when fields is diffrent with old fields.
-    --    t_flag get True when time is longer than threshold time range.
+local function get_threshold(fields, timestamp, t_range, m_range)
+    -- 获取'threshold*'键中的数据
+    -- parameters:
+    --   fields         要存储到redis的数据
+    --   timestamp      要存储到redis的时间戳，string类型
+    --   t_range        'new_timestamp'和'old_timestamp'之间差的时间，用于heartbeat
+    --   m_range        'new_timestamp'和'old_timestamp'之间差的时间，用于connbeat和databeat
+    --   return field_flag, time_flag, mark_flag      布尔值
 
+    -- 初始化field_flag、time_flag和mark_flag的值为false
+    local field_flag = false
+    local time_flag = false
+    local mark_flag = false
+
+    -- 解包得到eqpt_no和table_name用以组成'threshold_name'
     local eqpt_no = cmsgpack.unpack(fields)['tags']['eqpt_no']
-    local threshold_name = string.format("threshold_%s_%s", eqpt_no, cmsgpack.unpack(table_name))
+    local tab_name = cmsgpack.unpack(new_table_name)
+    local threshold_name = string.format("threshold_%s_%s", eqpt_no, tab_name)
+
+    -- 从'threshold_name'中获取已存入redis的'fields'和'timestamp'的值
     local old_fields = redis.call("HGET", threshold_name , "fields")
     local old_timestamp = redis.call("HGET", threshold_name, "timestamp")
+    -- timemark用于每mark_range更新一次心跳信息
+    local timemark = redis.call("HGET", threshold_name, "timemark")
 
-    if old_fields == false or old_timestamp == false then
-        set_threshold(threshold_name, timestamp)
-        return true, true
+    -- 需要刷新'threshold*'键的3种情况
+    -- 1. 'threshold*'中的'fields'、'timestamp'和'timemark'其中某个不存在
+    if old_fields == false or old_timestamp == false or timemark == false then
+        set_threshold(threshold_name, fields, timestamp)
+        redis.call('HSET', threshold_name, 'timemark', timestamp)
+        return true, true, true
     end
-
-    local f_flag = false
-    local t_flag = false
-    -- fields changed then set fields
+    -- 2. 'fields'和'old_fields'不一样
+    -- 并且将field_flag的值设置为true
     if fields ~= old_fields then
-        f_flag = true
-        set_threshold(threshold_name, timestamp)
+        set_threshold(threshold_name, fields, timestamp)
+        field_flag = true
     end
-    -- time bigger than last time set fields
-
-    if tonumber(timestamp) - tonumber(old_timestamp) > time_range then
-        t_flag = true
-        set_threshold(threshold_name, timestamp)
+    -- 3. ‘new_timestamp’和‘old_timestamp'之间差了'time_range'秒以上
+    -- 并且将time_flag的值设置为true
+    if tonumber(timestamp) - tonumber(old_timestamp) >= t_range then
+        set_threshold(threshold_name, fields, timestamp)
+        time_flag = true
     end
-    return f_flag, t_flag
+
+    -- 更新timemark
+    if tonumber(timestamp) - tonumber(timemark) >= m_range then
+        redis.call('HSET', threshold_name, 'timemark', timestamp)
+        mark_flag = true
+    end
+
+    return field_flag, time_flag, mark_flag
 end
+-------------------- FUNCTION PART --------------------
 
 
--- FUNCTION PART----------------------------------------------------------------------
+-- 两个标志位：
+-- field_flag = true时代表'new_fields'和'old_fields'是不同的，可以写入数据
+-- time_flag = true时代表'new_timestamp'和'old_timestamp'之间差了'time_range'秒以上，可以写入数据
+-- mark_flag = true时代表'new_timestamp'和'old_timestamp'之间差了'mark_range'秒以上，给出心跳信息
+local field_flag = nil
+local time_flag = nil
+local mark_flag = nil
 
-
-
---for using two user variables f_flag and t_flag.
-local f_flag = nil; local t_flag = nil
-
--- use unit to determine time_range.
-if cmsgpack.unpack(fields)['unit'] == 'u' then
-    time_range = time_range * 1000000
-end
-
---Save the amount of data for 2 days based on a data of 5 seconds
+-- CHANGED: 这个操作貌似没用了，因为没有'data_queue'这个键了
 if redis.call("llen", "data_queue") > 2 * 24 * 60 * 60 / 5 then
     redis.call("lpop", "data_queue")
 end
 
---set threshold according to time_range, fields['eqpt_no'], table_name
-f_flag, t_flag = threshold(fields, cmsgpack.unpack(timestamp), time_range)
+-- 调用get_threshold，由get_threshold调用set_threshold并返回field_flag、time_flag、mark_flag的值
+local time_stamp = cmsgpack.unpack(new_timestamp)
+field_flag, time_flag, mark_flag = get_threshold(new_fields, time_stamp, time_range, mark_range)
 
-
-if f_flag == true then
-
+-- 根据field_flag、time_flag和mark_flag的值将对应格式的数据写入redis
+if field_flag == true and mark_flag == true then
+    -- 有新数据且过了mark_range时间
     local data = {
-        table_name = table_name,
-        time = timestamp,
-        fields = fields,
+        connbeat = cmsgpack.pack(true),
+        databeat = cmsgpack.pack(true),
+        table_name = new_table_name,
+        time = new_timestamp,
+        fields = new_fields,
     }
 
     local msg = cmsgpack.pack(data)
-    -- redis.call("RPUSH", "data_queue", msg) -- msg queue
-    redis.call("XADD", "data_stream", "MAXLEN", MAXLEN, "*", "data", msg)
-    return 'field enque worked~'
+    redis.call("XADD", "data_stream", "*", "MAXLEN", MAXLEN, "data", msg)
 
-elseif t_flag == true then
+    return 'Field enque completed.'
+elseif field_flag == true and mark_flag == false then
+    -- 有新数据且没过mark_range时间
+    local data = {
+        table_name = new_table_name,
+        time = new_timestamp,
+        fields = new_fields,
+    }
 
+    local msg = cmsgpack.pack(data)
+    redis.call("XADD", "data_stream", "*", "MAXLEN", MAXLEN, "data", msg)
+
+    return 'Field enque completed.'
+elseif time_flag == true and mark_flag == true then
+    -- 新旧时间戳差值超过time_range且过了mark_range时间
     local data = {
         heartbeat = cmsgpack.pack(true),
-        table_name = table_name,
-        time = timestamp,
-        fields = fields,
+        connbeat = cmsgpack.pack(true),
+        databeat = cmsgpack.pack(true),
+        table_name = new_table_name,
+        time = new_timestamp,
+        fields = new_fields,
     }
+
     local msg = cmsgpack.pack(data)
-    -- redis.call("RPUSH", "data_queue", msg) -- msg queue
     redis.call("XADD", "data_stream", "*", "MAXLEN", MAXLEN, "data", msg)
-    return 'heart beat enque worked~'
+
+    return 'Time enque completed.'
+elseif time_flag == true and mark_flag == false then
+    -- 新旧时间戳差值超过time_range且没过mark_range时间
+    local data = {
+        heartbeat = cmsgpack.pack(true),
+        table_name = new_table_name,
+        time = new_timestamp,
+        fields = new_fields,
+    }
+
+    local msg = cmsgpack.pack(data)
+    redis.call("XADD", "data_stream", "*", "MAXLEN", MAXLEN, "data", msg)
+
+    return 'Time enque completed.'
 else
-    return 'ignoring schema worked!'
+    return 'Waiting for new data ...'
 end

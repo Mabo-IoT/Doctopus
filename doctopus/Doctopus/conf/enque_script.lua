@@ -52,15 +52,15 @@ local function get_threshold(fields, timestamp, t_range, m_range)
     local tab_name = cmsgpack.unpack(new_table_name)
     local threshold_name = string.format("threshold_%s_%s", eqpt_no, tab_name)
 
-    -- 从'threshold_name'中获取已存入redis的'fields'和'timestamp'的值
+    -- 从'threshold_name'中获取已存入redis的'fields'、'timestamp'和'timemark'的值
     local old_fields = redis.call("HGET", threshold_name , "fields")
     local old_timestamp = redis.call("HGET", threshold_name, "timestamp")
     -- timemark用于每mark_range更新一次心跳信息
-    local timemark = redis.call("HGET", threshold_name, "timemark")
+    local old_timemark = redis.call("HGET", threshold_name, "timemark")
 
     -- 需要刷新'threshold*'键的3种情况
     -- 1. 'threshold*'中的'fields'、'timestamp'和'timemark'其中某个不存在
-    if old_fields == false or old_timestamp == false or timemark == false then
+    if old_fields == false or old_timestamp == false or old_timemark == false then
         set_threshold(threshold_name, fields, timestamp)
         redis.call('HSET', threshold_name, 'timemark', timestamp)
         return true, true, true
@@ -79,7 +79,7 @@ local function get_threshold(fields, timestamp, t_range, m_range)
     end
 
     -- 更新timemark
-    if tonumber(timestamp) - tonumber(timemark) >= m_range then
+    if tonumber(timestamp) - tonumber(old_timemark) >= m_range then
         redis.call('HSET', threshold_name, 'timemark', timestamp)
         mark_flag = true
     end
@@ -106,15 +106,20 @@ end
 local time_stamp = cmsgpack.unpack(new_timestamp)
 field_flag, time_flag, mark_flag = get_threshold(new_fields, time_stamp, time_range, mark_range)
 
+local heartbeat_str = {name = "heartbeat", title = "存活心跳", value = 1, type = "int", unit = nil} -- 固定表示存活
+local connbeat_str = {name = "connbeat", title = "网络心跳", value = 1, type = "int", unit = nil}   -- 表示网络连接（有瑕疵）
+local databeat_str = {name = "databeat", title = "数据心跳", value = 1, type = "int", unit = nil}   -- 表示有新数据
+local all_fields = cmsgpack.unpack(new_fields)
 -- 根据field_flag、time_flag和mark_flag的值将对应格式的数据写入redis
 if field_flag == true and mark_flag == true then
     -- 有新数据且过了mark_range时间
+    all_fields["heartbeat"] = heartbeat_str
+    all_fields["connbeat"] = connbeat_str
+    all_fields["databeat"] = databeat_str
     local data = {
-        connbeat = cmsgpack.pack(true),
-        databeat = cmsgpack.pack(true),
         table_name = new_table_name,
         time = new_timestamp,
-        fields = new_fields,
+        fields = cmsgpack.pack(all_fields),
     }
 
     local msg = cmsgpack.pack(data)
@@ -123,10 +128,12 @@ if field_flag == true and mark_flag == true then
     return 'Field enque completed.'
 elseif field_flag == true and mark_flag == false then
     -- 有新数据且没过mark_range时间
+    all_fields["heartbeat"] = heartbeat_str
+    all_fields["databeat"] = databeat_str
     local data = {
         table_name = new_table_name,
         time = new_timestamp,
-        fields = new_fields,
+        fields = cmsgpack.pack(all_fields),
     }
 
     local msg = cmsgpack.pack(data)
@@ -135,13 +142,12 @@ elseif field_flag == true and mark_flag == false then
     return 'Field enque completed.'
 elseif time_flag == true and mark_flag == true then
     -- 新旧时间戳差值超过time_range且过了mark_range时间
+    all_fields["heartbeat"] = heartbeat_str
+    all_fields["connbeat"] = connbeat_str
     local data = {
-        heartbeat = cmsgpack.pack(true),
-        connbeat = cmsgpack.pack(true),
-        databeat = cmsgpack.pack(true),
         table_name = new_table_name,
         time = new_timestamp,
-        fields = new_fields,
+        fields = cmsgpack.pack(all_fields),
     }
 
     local msg = cmsgpack.pack(data)
@@ -150,11 +156,11 @@ elseif time_flag == true and mark_flag == true then
     return 'Time enque completed.'
 elseif time_flag == true and mark_flag == false then
     -- 新旧时间戳差值超过time_range且没过mark_range时间
+    all_fields["heartbeat"] = heartbeat_str
     local data = {
-        heartbeat = cmsgpack.pack(true),
         table_name = new_table_name,
         time = new_timestamp,
-        fields = new_fields,
+        fields = cmsgpack.pack(all_fields),
     }
 
     local msg = cmsgpack.pack(data)

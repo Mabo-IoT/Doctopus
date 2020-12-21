@@ -22,10 +22,10 @@ class KafkaWrapper:
     it will start a back thread automatically to send messages.
     """
     def __init__(self, conf):
-        self.conf: dict = conf
-        self.topic: str = conf.get("topic", "default")
-        self.bootstrap_servers: str = conf.get("bootstrap_servers",
-                                               "localhost:9092")
+        self.conf = conf
+        self.topic = conf.get("topic", "default")
+        self.bootstrap_servers = conf.get(
+            "bootstrap_servers", "localhost:9092")
         try:
             self.producer = KafkaProducer(
                 bootstrap_servers=self.bootstrap_servers,

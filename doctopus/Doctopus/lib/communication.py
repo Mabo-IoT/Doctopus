@@ -46,8 +46,19 @@ class Communication(object):
         self.log = list()
         self.hash = None
 
+        # 20-12-14 zhy: windows启动异常，communication中没有self.paths参数
+        self.__init_paths()
         # 重启刷新缓存
         self.flush_data()
+
+    def __init_paths(self):
+        if self.app == "ziyan":
+            self.paths = ['./conf/conf.toml', './lua/enque_script.lua', './plugins/your_plugin.py']
+        elif self.app == "chitu":
+            self.paths = ['./conf/conf.toml']
+        else:
+            self.paths = []
+
 
     @property
     def name(self):

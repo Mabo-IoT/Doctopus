@@ -128,7 +128,6 @@ class WatchDog(object):
         :param queue: Inter-thread communication queue
         :return:
         """
-        instances = list()
         if self.reload:
             self.instance_set = [
                 instance.re_load() for instance in self.instance_set

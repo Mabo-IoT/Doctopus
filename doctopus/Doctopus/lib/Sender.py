@@ -75,14 +75,14 @@ class Sender(object):
 
         if 'unit' in fields.keys():
             if fields['unit'] == 's':
-                date_time = datetime.datetime.fromtimestamp(
-                    timestamp).strftime("%Y-%m-%d %H:%M:%S")
+                date_time = pendulum.from_timestamp(
+                    timestamp, tz='Asia/Shanghai').to_datetime_string()
             else:
-                date_time = datetime.datetime.fromtimestamp(
-                    timestamp / 1000000).strftime("%Y-%m-%d %H:%M:%S.%f")
+                date_time = pendulum.from_timestamp(
+                    timestamp / 1000000, tz='Asia/Shanghai').to_datetime_string()
         else:
-            date_time = datetime.datetime.fromtimestamp(timestamp).strftime(
-                "%Y-%m-%d %H:%M:%S")
+            date_time = pendulum.from_timestamp(
+                timestamp, tz='Asia/Shanghai').to_datetime_string()
 
         log_str = self.log_format.format(table_name, fields, date_time)
         # show log or not

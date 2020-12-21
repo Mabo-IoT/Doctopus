@@ -100,6 +100,8 @@ def test2():
 
 
 if __name__ == '__main__':
+    from Doctopus.utils.util import get_conf
+
     conf = get_conf('../conf/conf.toml')['log_configuration']
     log = setup_logging(conf)
     log.info("测试脚本")

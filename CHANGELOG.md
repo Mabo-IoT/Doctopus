@@ -33,6 +33,15 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [v0.5.4] - 2020-12-14
+
+### Added
+
+- 去掉类型注释，增加对于xp系统的支持
+- redis连接可能存在失效，如时效时，增加尝试重连的操作，防止假死
+- 在windows环境下，无法启动，没有定义self.paths
+- 修改回pendulum，增加SH时区
+
 ## [v0.5.0] - 2020-10-21
 
 ### Added

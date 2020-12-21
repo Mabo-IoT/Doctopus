@@ -95,7 +95,6 @@ def make_ziyan(name):
     except Exception:
         traceback.print_exc()
 
-
 def make_chitu(name):
     """
         create a new project directory like follow:

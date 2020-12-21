@@ -7,7 +7,10 @@ import redis
 
 def init():
     lua_script_file = "./enque.lua"
-    pool = redis.ConnectionPool(host="localhost", port=6379, db=4)
+    pool = redis.ConnectionPool(
+            host= "localhost",
+            port= 6379,
+            db= 4)
     db: redis.Redis = redis.StrictRedis(connection_pool=pool, socket_timeout=1)
     # load lua script
     with open(lua_script_file, 'r') as fn:
@@ -15,7 +18,6 @@ def init():
         sha = db.script_load(script)
 
     return db, sha
-
 
 def generateMessage() -> dict:
     timestamp: int = int(time.time())
@@ -35,7 +37,6 @@ def generateMessage() -> dict:
         "fields": fields,
         "table_name": table_name,
     }
-
 
 def main():
     db, sha = init()

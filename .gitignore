@@ -12,6 +12,9 @@ sdist/
 
 # pycharm stuff
 .idea/
+.venv/
+.vscode/
+logs/
 
 # jupyter notebook stuff
 *.ipynb

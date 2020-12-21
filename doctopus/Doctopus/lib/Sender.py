@@ -1,3 +1,11 @@
+#!/usr/bin/env python
+# coding=utf-8
+'''
+Author: Zhang Hengye
+Date: 2020-05-21 09:04:18
+LastEditors: Zhang Hengye
+LastEditTime: 2020-12-17 10:31:45
+'''
 # -*- coding: utf-8 -*-
 
 import datetime
@@ -26,8 +34,7 @@ class Sender(object):
         self.conf = configuration['sender']
         self.lua_path = self.conf['lua_path']
 
-        self.db = RedisWrapper(self.redis_conf)
-        self.db.script_load(self.lua_path)
+        self.connect_redis()
 
         # log format
         self.enque_log_flag = self.conf['enque_log']
@@ -37,6 +44,10 @@ class Sender(object):
         self.communication = Communication(configuration)
 
         self.name = None
+
+    def connect_redis(self):
+        self.db = RedisWrapper(self.redis_conf)
+        self.db.script_load(self.lua_path)
 
     def work(self, queue, **kwargs):
         """
@@ -83,12 +94,17 @@ class Sender(object):
         timestamp = msgpack.packb(timestamp)
         # send data to redis
         try:
-            lua_info = self.db.enqueue(table_name=table_name,
-                                       fields=fields,
-                                       timestamp=timestamp)
+            lua_info = self.db.enqueue(
+                table_name=table_name, fields=fields, timestamp=timestamp)
             log.info(lua_info.decode())
         except Exception as err:
             log.error(err)
+            log.info('try to connect redis')
+            try:
+                self.connect_redis()
+            except Exception as err:
+                log.error(
+                    'reconnect redis fail, check redis status and conf, info: \n{}'.format(err)
 
     def send_to_communication(self, data):
         """

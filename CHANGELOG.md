@@ -33,7 +33,14 @@ All notable changes to this project will be documented in this file.
 
 ---
 
-## [v0.5.4] - 2020-12-14
+## [v0.5.5] - 2020-12-22
+
+### Added
+
+- 修改version.py的位置，移动至doctopus目录
+- 不从conf中加载version.py，直接从doctopus包中读取，也保证了version的一致性
+
+## [v0.5.4] - 2020-12-21
 
 ### Added
 

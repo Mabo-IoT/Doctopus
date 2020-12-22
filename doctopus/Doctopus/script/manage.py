@@ -4,7 +4,7 @@ import argparse
 import sys
 
 import waitress
-from conf.version import version_
+from Doctopus.version import version_
 from Doctopus.web.app import get_app
 
 try:

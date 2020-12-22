@@ -6,7 +6,7 @@ import os
 import shutil
 import traceback
 
-from Doctopus.conf.version import version_
+from Doctopus.version import version_
 
 
 def main():
@@ -69,10 +69,6 @@ def make_ziyan(name):
             os.mkdir(name + '/plugins')
             filepath = os.path.split(os.path.realpath(__file__))[0]
 
-            # copy version files
-            for file in glob.glob(filepath + '/conf/version.py'):
-                shutil.copyfile(file, name + '/conf/version.py')
-
             # copy conf files
             for file in glob.glob(filepath + '/conf/ziyan_conf.toml'):
                 shutil.copyfile(file, name + '/conf/conf.toml')
@@ -95,6 +91,7 @@ def make_ziyan(name):
     except Exception:
         traceback.print_exc()
 
+
 def make_chitu(name):
     """
         create a new project directory like follow:
@@ -112,10 +109,6 @@ def make_chitu(name):
         if not os.path.exists(name):
             os.makedirs(name + '/conf')
             filepath = os.path.split(os.path.realpath(__file__))[0]
-
-            # copy version files
-            for file in glob.glob(filepath + '/conf/version.py'):
-                shutil.copyfile(file, name + '/conf/version.py')
 
             # copy conf files
             for file in glob.glob(filepath + '/conf/chitu_conf.toml'):

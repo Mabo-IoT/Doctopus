@@ -4,14 +4,14 @@
 Author: Zhang Hengye
 Date: 2020-04-20 17:03:55
 LastEditors: Zhang Hengye
-LastEditTime: 2020-12-17 11:46:36
+LastEditTime: 2020-12-22 10:28:25
 '''
 
 import sys
 
 from setuptools import find_packages, setup
 
-from Doctopus.conf.version import version_
+from Doctopus.version import version_
 
 if sys.version_info[0] == 3 and sys.version_info[1] >= 5:
     setup(name='Doctopus',

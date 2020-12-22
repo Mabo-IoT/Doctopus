@@ -4,7 +4,7 @@
 Author: Zhang Hengye
 Date: 2020-05-21 09:04:18
 LastEditors: Zhang Hengye
-LastEditTime: 2020-12-17 10:31:45
+LastEditTime: 2020-12-22 09:56:26
 '''
 # -*- coding: utf-8 -*-
 
@@ -28,6 +28,7 @@ class Sender(object):
     """
     send data to redis and watchdog
     """
+
     def __init__(self, configuration):
 
         self.redis_conf = configuration['redis']
@@ -104,7 +105,8 @@ class Sender(object):
                 self.connect_redis()
             except Exception as err:
                 log.error(
-                    'reconnect redis fail, check redis status and conf, info: \n{}'.format(err)
+                    'reconnect redis fail, check redis status and conf, info: \n{}'.format(
+                        err))
 
     def send_to_communication(self, data):
         """

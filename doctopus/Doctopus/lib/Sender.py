@@ -4,7 +4,7 @@
 Author: Zhang Hengye
 Date: 2020-05-21 09:04:18
 LastEditors: Zhang Hengye
-LastEditTime: 2020-12-22 09:56:26
+LastEditTime: 2020-12-23 12:47:31
 '''
 # -*- coding: utf-8 -*-
 
@@ -13,6 +13,7 @@ import sys
 from logging import getLogger
 
 import msgpack
+import pendulum
 
 if sys.version_info[0] == 3 and sys.version_info[1] >= 5:
     from Doctopus.lib.communication import Communication

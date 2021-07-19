@@ -219,16 +219,24 @@ class Transport:
             try:
                 info = self.db.send(data, time_precision)
             except InfluxDBClientError as e:
-                # 2021-07-19 zhy: Îª·ÀÖ¹³¬¹ı±£Áô²ßÂÔµÄÊı¾İµ¼ÖÂ chitu ´«Êı¾İ¿¨ËÀ.
+                timestamp = data[0]['time'] / 1000000
+                t_string = datetime.utcfromtimestamp(
+                    timestamp).strftime('%Y-%m-%d %H:%M:%S')
+                # 2021-07-19 zhy: ä¸ºé˜²æ­¢è¶…è¿‡ä¿ç•™ç­–ç•¥çš„æ•°æ®å¯¼è‡´ chitu ä¼ æ•°æ®å¡æ­».
                 if 'points beyond retention policy dropped' in str(e):
-                    timestamp = data[0]['time'] / 1000000
-                    t_string = datetime.utcfromtimestamp(
-                        timestamp).strftime('%Y-%m-%d %H:%M:%S')
                     log.warning('Data beyond influx retention policy, timestamp is: {}, means {}'.format(
                         timestamp, t_string))
                     log.warning('Data is: {}'.format(data))
                     log.warning('Drop it.')
                     info = 'Drop data because data beyond influx retention policy.'
+                # https://10.7.0.117:9091/mabo_group/base_application/doctopus/issues/3
+                # 2021-07-19 zhy: ä¸ºé˜²æ­¢æ•°æ®å› æœªçŸ¥åŸå› å¯¼è‡´parseé”™è¯¯, dropæ‰. é˜²æ­¢å¡æ­».
+                elif 'invalid field format' in str(e):
+                    log.warning('Data parse error, influx can`t receive it, timestamp is: {}, means {}'.format(
+                        timestamp, t_string))
+                    log.warning('Data is: {}'.format(data))
+                    log.warning('Drop it.')
+                    info = 'Drop data because parse error, influx can`t receive it.'
                 else:
                     raise e
 

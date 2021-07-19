@@ -6,7 +6,7 @@ import time
 import traceback
 from datetime import datetime
 from queue import Queue
-
+from influxdb.exceptions import InfluxDBClientError
 import msgpack
 from redis import exceptions
 
@@ -54,7 +54,7 @@ class Transport:
                 return client
 
             except Exception as err:
-                log.error(err)
+                log.exception(err)
                 log.error("Can't init Kafka client, try again...")
                 time.sleep(1)
 
@@ -73,7 +73,7 @@ class Transport:
                     self.redis.addGroup(self.group)
                 raw_data = None
             except Exception as err:
-                log.error(err)
+                log.exception(err)
                 raw_data = None
 
             # compress and send data
@@ -86,7 +86,7 @@ class Transport:
                     log.debug("Redis ack data.")
                     self.redis.ack(self.group, raw_data["id"])
                 except Exception as err:
-                    log.error(err)
+                    log.exception(err)
                     time.sleep(3)
 
     def pending(self, *args):
@@ -97,11 +97,11 @@ class Transport:
             except exceptions.ResponseError as err:
                 # NOGROUP for data_stream, recreate it.
                 if "NOGROUP" in str(err):
-                    log.error(err)
+                    log.exception(err)
                     self.redis.addGroup(self.group)
                 pending_data = []
             except Exception as err:
-                log.error(err)
+                log.exception(err)
                 pending_data = []
 
             if pending_data:
@@ -117,7 +117,8 @@ class Transport:
                             log.debug("Redis ack pending data.")
                             self.redis.ack(self.group, raw_data["id"])
                         except Exception as err:
-                            log.error(err)
+                            log.exception(err)
+                            log.debug(f'Err data is: {data}')
                             time.sleep(3)
             else:
                 time.sleep(5)
@@ -141,7 +142,7 @@ class Transport:
                 data["data"] = raw_data
             except Exception as err:
                 traceback.print_exc()
-                log.error(err)
+                log.exception(err)
         else:
             log.info('Redis have no new data.')
             time.sleep(5)
@@ -173,14 +174,14 @@ class Transport:
                     }]
                     return json_data
                 except Exception as err:
-                    log.error(err)
+                    log.exception(err)
             elif self.to_where == 'kafka':
                 try:
                     json_data = self.db.pack(data)
                     return json_data
                 except Exception as err:
                     traceback.print_exc()
-                    log.error(err)
+                    log.exception(err)
             elif self.to_where == 'mqtt':
                 try:
                     schema, table = data.get('table_name').split('.')
@@ -215,7 +216,22 @@ class Transport:
         """
         if self.to_where == 'influxdb':
             time_precision = data[0].pop('unit')
-            info = self.db.send(data, time_precision)
+            try:
+                info = self.db.send(data, time_precision)
+            except InfluxDBClientError as e:
+                # 2021-07-19 zhy: 为防止超过保留策略的数据导致 chitu 传数据卡死.
+                if 'points beyond retention policy dropped' in str(e):
+                    timestamp = data[0]['time'] / 1000000
+                    t_string = datetime.utcfromtimestamp(
+                        timestamp).strftime('%Y-%m-%d %H:%M:%S')
+                    log.warning('Data beyond influx retention policy, timestamp is: {}, means {}'.format(
+                        timestamp, t_string))
+                    log.warning('Data is: {}'.format(data))
+                    log.warning('Drop it.')
+                    info = 'Drop data because data beyond influx retention policy.'
+                else:
+                    raise e
+
             self.communication.data[data[0]["measurement"]] = data
             if info:
                 log.info('Send data to inflxudb.{}, {}'.format(
@@ -238,7 +254,7 @@ class Transport:
                 log.info('Publish data to MQTT topics({}): {}'.format(
                     self.mqtt_conf.get('topics', list()), data))
             except Exception as err:
-                log.error(err)
+                log.exception(err)
 
     def getData(self):
         """Get data from data_stream

@@ -22,6 +22,7 @@ class RedisWrapper:
     db.script_load(lua_file)
     db.enqueue(**kwargs)  #入队
     """
+
     def __init__(self, conf):
         """
         :param conf: dict, 包含 Redis 的 host, port, db
@@ -75,7 +76,7 @@ class RedisWrapper:
                 log.info("Already exists group {} for data stream".format(
                     group_name))
         except Exception as err:
-            log.error(err)
+            log.exception(err)
             raise err
 
     def readGroup(self, group_name, consumer):
@@ -259,29 +260,28 @@ class RedisWrapper:
 
 
 class InfluxdbWrapper:
-    """
-    包装 influxdb 库
-
-    用法：
-    josn_data = [
-        {
-            "measurement": "cpu_load_short",
-            "tags": {
-                "host": "server01",
-                "region": "us-west"
-            },
-            "time": "2009-11-10T23:00:00Z",
-            "fields": {
-                "value": 0.64
+    """包装 influxdb 库
+        用法：
+        josn_data = [
+            {
+                "measurement": "cpu_load_short",
+                "tags": {
+                    "host": "server01",
+                    "region": "us-west"
+                },
+                "time": "2009-11-10T23:00:00Z",
+                "fields": {
+                    "value": 0.64
+                }
             }
-        }
-    ]
-    db = InfluxdbWrapper('localhost', 8086, 'root', 'root', db)
-    or
-    db = InfluxdbWrapper(conf)
+        ]
+        db = InfluxdbWrapper('localhost', 8086, 'root', 'root', db)
+        or
+        db = InfluxdbWrapper(conf)
 
-    db.send(josn_data, retention_policy='specify')
-    """
+        db.send(josn_data, retention_policy='specify')
+        """
+
     def __init__(self, *args, **kwargs):
         if args and len(args) == 5:
             self.__db = InfluxDBClient(host=args[0],
@@ -317,9 +317,8 @@ class InfluxdbWrapper:
         self.test_connect()
 
     def test_connect(self):
-        """
-        初始化连接 Influxdb 数据库, 确保 Influxdb 连接成功
-        :return: None
+        """初始化连接 Influxdb 数据库, 确保 Influxdb 连接成功
+            :return: None
         """
         i = 0
         while True:
@@ -338,39 +337,37 @@ class InfluxdbWrapper:
              time_precision='s',
              database=None,
              retention_policy=None):
-        """
-        Write to multiple time series names
-        :param json_body: list of dictionaries,
-                          each dictionary represents a point,
-                          the list of points to be written in the database
-        :param time_precision: database time precision, default is second
-        :param database: str, the database to write the points to
-                         Defaults to the client’s current database
-        :param retention_policy: str, the retention policy for the points.
-                                 Defaults to None
-        :return: bool
+        """Write to multiple time series names
+            :param json_body: list of dictionaries,
+                            each dictionary represents a point,
+                            the list of points to be written in the database
+            :param time_precision: database time precision, default is second
+            :param database: str, the database to write the points to
+                            Defaults to the client’s current database
+            :param retention_policy: str, the retention policy for the points.
+                                    Defaults to None
+            :return: bool
         """
         if self.test_connect():
-            return self.__db.write_points(json_body,
+            info = self.__db.write_points(json_body,
                                           time_precision=time_precision,
                                           database=database,
                                           retention_policy=retention_policy)
+            return info
         else:
             return False
 
     def swith_database(self, database):
-        """
-        Change the client’s database.
-        :param database: str, database name
-        :return: None
+        """Change the client’s database.
+            :param database: str, database name
+            :return: None
         """
         self.__db.switch_database(database)
 
     def query(self, query):
-        """
-        Send a query to Influxdb
-        :param query: str, SQL-like query statement
-        :return: always return a list
+        """Send a query to Influxdb
+            :param query: str, SQL-like query statement
+            :return: always return a list
         """
         return self.__db.query(query)
 
@@ -379,6 +376,7 @@ class EtcdWrapper:
     """
     Pack etcd library, send data to etcd
     """
+
     def __init__(self, conf):
         self.conf = conf
         self.host, self.port = self.conf['host'], self.conf['port']

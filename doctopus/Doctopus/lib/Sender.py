@@ -100,7 +100,7 @@ class Sender(object):
                 table_name=table_name, fields=fields, timestamp=timestamp)
             log.info(lua_info.decode())
         except Exception as err:
-            log.error(err)
+            log.exception(err)
             log.info('try to connect redis')
             try:
                 self.connect_redis()

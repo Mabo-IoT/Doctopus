@@ -173,7 +173,7 @@ class MqttWrapper(object):
                                      payload=payload,
                                      qos=self._qos)
         except Exception as err:
-            log.error(err)
+            log.exception(err)
 
     def subMessage(self):
         """Subscribe to data from MQTT bridge."""
@@ -182,4 +182,4 @@ class MqttWrapper(object):
             for topic in self._topics:
                 self._client.subscribe(topic=topic, qos=self._qos)
         except Exception as err:
-            log.error(err)
+            log.exception(err)
